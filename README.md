@@ -95,7 +95,7 @@ or
 Wait, how to install it?
 ------------------------
 
-First, you need [MongoDB](http://www.mongodb.org/downloads), [Go](http://golang.org/doc/install) and [bzr](http://golang.org/doc/install).
+First, you need [MongoDB](http://www.mongodb.org/downloads), [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/).
 
 Getting **perfkeeper**:
 
