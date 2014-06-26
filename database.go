@@ -108,3 +108,36 @@ func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string
 		log.Fatal(err)
 	}
 }
+
+func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]interface{} {
+	session := mongo.Session.New()
+	defer session.Close()
+	_collection := session.DB(db).C(collection)
+
+	pipe := _collection.Pipe(
+		[]bson.M{
+			{
+				"$match": bson.M{
+					"m": metric,
+				},
+			},
+			{
+				"$group": bson.M{
+					"_id": bson.M{
+						"metric": "$m",
+					},
+					"avg": bson.M{"$avg": "$v"},
+					"min": bson.M{"$min": "$v"},
+					"max": bson.M{"$max": "$v"},
+				},
+			},
+		},
+	)
+	summary := []map[string]interface{}{}
+	err := pipe.All(&summary)
+	if err != nil {
+		log.Fatal(err)
+	}
+	delete(summary[0], "_id")
+	return summary[0]
+}

@@ -74,9 +74,9 @@ This API returns JSON document with aggregated metrics:
 output:
 
     {
-        "min": 0.1,
+        "avg": 34.2,
         "max": 87.1,
-        "mean": 34.2,
+        "min": 0.1,
         "p50": 37.3,
         "p80": 52.4,
         "p90": 72.5,

@@ -63,6 +63,17 @@ func GetRawValues(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, Response{values})
 }
 
+func GetSummary(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	db := vars["db"]
+	source := vars["source"]
+	metric := vars["metric"]
+
+	rw.Header().Set("Content-Type", "application/json")
+	values := storage.Aggregate("perf"+db, source, metric)
+	fmt.Fprint(rw, Response{values})
+}
+
 func AddSamples(rw http.ResponseWriter, r *http.Request) {
 	tsInt := time.Now().UnixNano()
 	ts := strconv.FormatInt(tsInt, 10)
@@ -98,6 +109,7 @@ func main() {
 	r.HandleFunc("/{db}/{source}", ListMetrics).Methods("GET")
 	r.HandleFunc("/{db}/{source}", AddSamples).Methods("POST")
 	r.HandleFunc("/{db}/{source}/{metric}", GetRawValues).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/summary", GetSummary).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
