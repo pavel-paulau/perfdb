@@ -110,6 +110,10 @@ func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = _collection.EnsureIndexKey("ts")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func calcPercentile(data []float64, p float64) float64 {
