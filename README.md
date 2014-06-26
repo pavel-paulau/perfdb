@@ -9,7 +9,7 @@ There are many beautiful systems like [cube](https://github.com/square/cube). Un
 
 **perfkeeper** was created to address daily needs of performance benchmarking. It allows to maintain arbitrary samples collected during relatively short period of time. All samples are grouped by data source (e.g., OS stats or database metrics). In turn, sources are grouped within data snapshot which represents single benchmarking iteration. There are no reducers, you get data as it is.
 
-It's built on top of very fast components. All samples automatically indexed and queries are nearly instantaneous. Interaction with storage is implemented via simple REST API. There are asynchronous and fully concurrent handlers behind every entry point, so that your requests will never wait.
+It's built on top of very fast components. All samples are automatically indexed and queries are nearly instantaneous. Interaction with storage is implemented via simple REST API. There are asynchronous and fully concurrent handlers behind every endpoint, so that your requests will never wait.
 
 Deployment is straightforward as well. It only requires running database (MongoDB, as for the moment of writing) and Go environment.
 
@@ -32,7 +32,7 @@ Where:
 
   `benchmark_06252014` is a common snapshot entity. You should change it before *any* test or benchmark iteration.
 
-   `172.23.100.96` is a source name. In this case we are using IP address, it can be an application name (e.g., nginx@172.23.100.96) or name of database (e.g., mydatabase@127.0.0.1).
+   `172.23.100.96` is a source name. In this case we are using IP address, it can be an application name (e.g., "nginx@172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
 
    `sample.json` is the JSON document which we described above.
 
@@ -86,11 +86,11 @@ output:
 
 Built-in visualization using amazing SVG charts:
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/scatter.svg
+    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/scatter
 
 or 
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/histogram.svg
+    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/histogram
 
 Wait, how to install it?
 ------------------------
