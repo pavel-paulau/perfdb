@@ -102,4 +102,9 @@ func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = _collection.EnsureIndexKey("m")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
