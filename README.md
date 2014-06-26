@@ -81,7 +81,7 @@ output:
         "p80": 52.4,
         "p90": 72.5,
         "p95": 81.7,
-        "p99": 85.2,
+        "p99": 85.2
     }
 
 Built-in visualization using amazing SVG charts:

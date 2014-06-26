@@ -170,7 +170,7 @@ func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]i
 	for _, doc := range docs {
 		values = append(values, doc["v"].(float64))
 	}
-	for _, percentile := range []float64{0.8, 0.9, 0.95, 0.99} {
+	for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
 		p := fmt.Sprintf("p%v", percentile*100)
 		summary[p] = calcPercentile(values, percentile)
 	}
