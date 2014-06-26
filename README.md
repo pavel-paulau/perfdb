@@ -29,8 +29,11 @@ You can persist your measurements by sending the following HTTP request:
     $ curl -X POST http://127.0.0.0:8080/benchmark_06252014/172.23.100.96 -d @sample.json
 
 Where:
+
   `benchmark_06252014` is a common snapshot entity. You should change it before *any* test or benchmark iteration.
+
    `172.23.100.96` is a source name. In this case we are using IP address, it can be an application name (e.g., nginx@172.23.100.96) or name of database (e.g., mydatabase@127.0.0.1).
+
    `sample.json` is the JSON document which we described above.
 
 Querying samples
@@ -46,7 +49,7 @@ output is a JSON document as well:
 
 where `1403736306507708119` is sample timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
 
-Listing all snapshots, sources and metrics
+Listing snapshots, sources and metrics
 ------------------------------------------
 
 In order to list all snapshots:
