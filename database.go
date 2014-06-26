@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -109,6 +112,19 @@ func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string
 	}
 }
 
+func calcPercentile(data []float64, p float64) float64 {
+	sort.Float64s(data)
+
+	k := float64(len(data)-1) * p
+	f := math.Floor(k)
+	c := math.Ceil(k)
+	if f == c {
+		return data[int(k)]
+	} else {
+		return data[int(f)]*(c-k) + data[int(c)]*(k-f)
+	}
+}
+
 func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]interface{} {
 	session := mongo.Session.New()
 	defer session.Close()
@@ -133,11 +149,27 @@ func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]i
 			},
 		},
 	)
-	summary := []map[string]interface{}{}
-	err := pipe.All(&summary)
+	summaries := []map[string]interface{}{}
+	err := pipe.All(&summaries)
 	if err != nil {
 		log.Fatal(err)
 	}
-	delete(summary[0], "_id")
-	return summary[0]
+	summary := summaries[0]
+	delete(summary, "_id")
+
+	var docs []map[string]interface{}
+	err = _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	values := []float64{}
+	for _, doc := range docs {
+		values = append(values, doc["v"].(float64))
+	}
+	for _, percentile := range []float64{0.8, 0.9, 0.95, 0.99} {
+		p := fmt.Sprintf("p%v", percentile*100)
+		summary[p] = calcPercentile(values, percentile)
+	}
+
+	return summary
 }
