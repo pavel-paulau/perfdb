@@ -137,6 +137,6 @@ func main() {
 	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
 	http.Handle("/", r)
 
-	fmt.Println(":-:-: perfkeeper :-:-:\t\t\tserving 0.0.0.0:8080")
+	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving 0.0.0.0:8080\n")
 	log.Fatal(http.ListenAndServe("0.0.0.0:8080", Log(http.DefaultServeMux)))
 }
