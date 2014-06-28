@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -117,6 +118,8 @@ func Log(handler http.Handler) http.Handler {
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	storage.Init()
 
 	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/app"
