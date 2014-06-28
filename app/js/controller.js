@@ -10,6 +10,13 @@ function Timeline($scope, $http) {
 		return function() { return "#7D1935"; };
 	};
 
+	var format = d3.format('.2f');
+	$scope.yAxisTickFormatFunction = function(){
+		return function(d) {
+			return format(d);
+		};
+	};
+
 	$scope.height = window.innerHeight * 0.95;
 
 	$http.get(raw_data_url).success(function(data) {
