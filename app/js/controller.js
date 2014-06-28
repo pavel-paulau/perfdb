@@ -38,7 +38,7 @@ function Timeline($scope, $http) {
 		$scope.chartData = [{"key": pathname[3], "values": values}];
 
 		setTimeout(function() {
-			$('.nv-point').attr("r", "3.5");
+			$('.nv-point').attr("r", "2");
 		}, 500);
 	});
 }
