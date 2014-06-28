@@ -109,6 +109,13 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func Log(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL)
+		handler.ServeHTTP(rw, r)
+	})
+}
+
 func main() {
 	storage.Init()
 
@@ -127,5 +134,5 @@ func main() {
 	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
 	http.Handle("/", r)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", Log(http.DefaultServeMux)))
 }
