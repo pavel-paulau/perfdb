@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -74,6 +76,14 @@ func GetSummary(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, Response{values})
 }
 
+func GetLineChart(rw http.ResponseWriter, r *http.Request) {
+	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/"
+
+	content, _ := ioutil.ReadFile(app + "app/linechart.html")
+	rw.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(rw, string(content))
+}
+
 func AddSamples(rw http.ResponseWriter, r *http.Request) {
 	tsInt := time.Now().UnixNano()
 	ts := strconv.FormatInt(tsInt, 10)
@@ -102,6 +112,10 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 func main() {
 	storage.Init()
 
+	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/app"
+	fileHandler := http.StripPrefix("/static/", http.FileServer(http.Dir(app)))
+	http.Handle("/static/", fileHandler)
+
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	r.HandleFunc("/", ListDatabases).Methods("GET")
@@ -110,6 +124,7 @@ func main() {
 	r.HandleFunc("/{db}/{source}", AddSamples).Methods("POST")
 	r.HandleFunc("/{db}/{source}/{metric}", GetRawValues).Methods("GET")
 	r.HandleFunc("/{db}/{source}/{metric}/summary", GetSummary).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
 	http.Handle("/", r)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
