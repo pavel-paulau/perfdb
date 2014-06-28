@@ -26,7 +26,7 @@ Let's say you collect CPU stats every 5 seconds, each sample is represented by a
 
 You can persist your measurements by sending the following HTTP request:
 
-    $ curl -X POST http://127.0.0.0:8080/benchmark_06252014/172.23.100.96 -d @sample.json
+    $ curl -X POST http://127.0.0.1:8080/benchmark_06252014/172.23.100.96 -d @sample.json
 
 Where:
 
@@ -41,7 +41,7 @@ Querying samples
 
 It cannot be simpler:
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys
+    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys
 
 output is a JSON document as well:
 
@@ -54,22 +54,22 @@ Listing snapshots, sources and metrics
 
 In order to list all snapshots:
 
-    $ curl http://127.0.0.0:8080/
+    $ curl http://127.0.0.1:8080/
 
 In order to list all sources for given snapshot:
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014
+    $ curl http://127.0.0.18080/benchmark_06252014
 
 Getting a list of distinct metrics:
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96
+    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96
 
 Summary and visualization
 -------------------------
 
 This API returns JSON document with aggregated metrics:
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/summary
+    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys/summary
 
 output:
 
@@ -86,7 +86,7 @@ output:
 
 Built-in visualization using amazing D3 charts :
 
-    $ http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
+    $ http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
 
 ![](docs/linechart.png)
 
