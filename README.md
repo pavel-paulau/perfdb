@@ -84,9 +84,11 @@ output:
         "p99": 85.2
     }
 
-Built-in visualization using amazing D3 charts:
+Built-in visualization using amazing D3 charts :
 
-    $ curl http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
+    $ http://127.0.0.0:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
+
+![](docs/linechart.png)
 
 Wait, how to install it?
 ------------------------
