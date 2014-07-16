@@ -106,7 +106,7 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 			"m":  m,
 			"v":  v,
 		}
-		storage.InsertSample(DBPREFIX+db, source, sample)
+		go storage.InsertSample(DBPREFIX+db, source, sample)
 	}
 }
 
