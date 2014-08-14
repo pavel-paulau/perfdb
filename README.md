@@ -36,6 +36,8 @@ Where:
 
    `sample.json` is the JSON document which we described above.
 
+[perfstat](https://github.com/pavel-paulau/perfstat) may simplify stats collection.
+
 Querying samples
 ----------------
 
