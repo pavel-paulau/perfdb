@@ -95,9 +95,9 @@ Built-in visualization using amazing D3 charts :
 Wait, how to install it?
 ------------------------
 
-First, you need [MongoDB](http://www.mongodb.org/downloads), [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/).
+First, you need [MongoDB](http://www.mongodb.org/downloads). Stable binaries are available at [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-Getting **perfkeeper**:
+To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting **perfkeeper**:
 
     $ go get github.com/pavel-paulau/perfkeeper
 
