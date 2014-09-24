@@ -19,13 +19,14 @@ type MongoHandler struct {
 func (mongo *MongoHandler) Init() {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   []string{"127.0.0.1"},
-		Timeout: 10 * time.Minute,
+		Timeout: 30 * time.Second,
 	}
 
 	var err error
+	log.Println("Connecting to database...")
 	mongo.Session, err = mgo.DialWithInfo(dialInfo)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to database: %s", err)
 	}
 	mongo.Session.SetMode(mgo.Monotonic, true)
 }
@@ -33,7 +34,7 @@ func (mongo *MongoHandler) Init() {
 func (mongo *MongoHandler) ListDatabases() []string {
 	all_dbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	dbs := []string{}
@@ -52,7 +53,7 @@ func (mongo *MongoHandler) ListCollections(db string) []string {
 
 	all_collections, err := _db.CollectionNames()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	collections := []string{}
@@ -72,7 +73,7 @@ func (mongo *MongoHandler) ListMetrics(db, collection string) []string {
 	var metrics []string
 	err := _collection.Find(bson.M{}).Distinct("m", &metrics)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	return metrics
 }
@@ -85,7 +86,7 @@ func (mongo *MongoHandler) FindValues(db, collection, metric string) map[string]
 	var docs []map[string]interface{}
 	err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	values := map[string]float64{}
@@ -103,16 +104,16 @@ func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string
 
 	err := _collection.Insert(sample)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	err = _collection.EnsureIndexKey("m")
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	err = _collection.EnsureIndexKey("ts")
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 }
 
@@ -156,7 +157,7 @@ func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]i
 	summaries := []map[string]interface{}{}
 	err := pipe.All(&summaries)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	summary := summaries[0]
 	delete(summary, "_id")
@@ -164,7 +165,7 @@ func (mongo *MongoHandler) Aggregate(db, collection, metric string) map[string]i
 	var docs []map[string]interface{}
 	err = _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	values := []float64{}
 	for _, doc := range docs {
