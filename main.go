@@ -86,8 +86,13 @@ func GetLineChart(rw http.ResponseWriter, r *http.Request) {
 }
 
 func AddSamples(rw http.ResponseWriter, r *http.Request) {
-	tsInt := time.Now().UnixNano()
-	ts := strconv.FormatInt(tsInt, 10)
+	var ts string
+	if timestamps, ok := r.URL.Query()["ts"]; ok {
+		ts = timestamps[0]
+	} else {
+		tsInt := time.Now().UnixNano()
+		ts = strconv.FormatInt(tsInt, 10)
+	}
 
 	vars := mux.Vars(r)
 	db := vars["db"]
