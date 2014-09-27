@@ -11,7 +11,7 @@ There are many beautiful systems like [cube](https://github.com/square/cube). Un
 
 It's built on top of very fast components. All samples are automatically indexed and queries are nearly instantaneous. Interaction with storage is implemented via simple REST API. There are asynchronous and fully concurrent handlers behind every endpoint, so that your requests will never wait.
 
-Deployment is straightforward as well. It only requires running database (MongoDB, as for the moment of writing) and Go environment.
+Deployment is straightforward as well. It only requires running database (TokuMX, as for the moment of writing).
 
 Storing samples
 ---------------
@@ -97,7 +97,7 @@ See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advance
 Wait, how to install it?
 ------------------------
 
-First, you need [MongoDB](http://www.mongodb.org/downloads). Stable binaries are available at [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). Stable binaries are available at [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
 To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting **perfkeeper**:
 
