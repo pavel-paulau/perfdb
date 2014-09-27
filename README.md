@@ -86,11 +86,13 @@ output:
         "p99": 85.2
     }
 
-Built-in visualization using amazing D3 charts :
+Built-in visualization using amazing D3 charts:
 
     $ http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
 
 ![](docs/linechart.png)
+
+See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advanced report generation system.
 
 Wait, how to install it?
 ------------------------
