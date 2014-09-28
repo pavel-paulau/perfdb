@@ -24,10 +24,17 @@ func Log(handler http.Handler) http.Handler {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/app"
-	fileHandler := http.StripPrefix("/static/", http.FileServer(http.Dir(app)))
-	http.Handle("/static/", fileHandler)
+	// Storage initialization
+	var err error
+	if Storage, err = NewStorage(); err != nil {
+		os.Exit(1)
+	}
 
+	// Static assets
+	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/app"
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(app))))
+
+	// RESTful API
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	r.HandleFunc("/", ListDatabases).Methods("GET")
@@ -39,12 +46,7 @@ func main() {
 	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
 	http.Handle("/", r)
 
+	// Banner and launcher
 	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://0.0.0.0:8080/\n")
-
-	var err error
-	if Storage, err = NewStorage(); err != nil {
-		os.Exit(1)
-	}
-
 	Logger.Critical(http.ListenAndServe("0.0.0.0:8080", Log(http.DefaultServeMux)))
 }
