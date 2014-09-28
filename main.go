@@ -33,6 +33,7 @@ func main() {
 	// Static assets
 	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/app"
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(app))))
+	http.Handle("/favicon.ico", http.FileServer(http.Dir(app)))
 
 	// RESTful API
 	r := mux.NewRouter()
