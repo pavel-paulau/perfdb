@@ -102,7 +102,8 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&samples)
 	if err != nil {
-		log.Panicf("Cannot decode sample: %s", err)
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "Cannot decode sample: %s\n", err)
 		return
 	}
 
