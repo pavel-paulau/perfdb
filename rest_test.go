@@ -40,11 +40,11 @@ func TestListCollections(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-var DbError = errors.New("Database error")
+var ErrTest = errors.New("fake test error")
 
 func TestListCollectionsError(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("listCollections", "snapshot").Return([]string{}, DbError)
+	storageMock.Mock.On("listCollections", "snapshot").Return([]string{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot", nil)
@@ -72,7 +72,7 @@ func TestListMetrics(t *testing.T) {
 
 func TestListMetricsError(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{}, DbError)
+	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot/source", nil)
@@ -102,7 +102,7 @@ func TestFindValues(t *testing.T) {
 func TestFinaValuesError(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("findValues",
-		"snapshot", "source", "cpu").Return(map[string]float64{}, DbError)
+		"snapshot", "source", "cpu").Return(map[string]float64{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot/source/cpu", nil)
@@ -136,7 +136,7 @@ func TestInsertSampleError(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("insertSample",
 		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
-	).Return(DbError)
+	).Return(ErrTest)
 	storage = storageMock
 
 	req, err := http.NewRequest("POST", "/snapshot/source?ts=1411940889515410774",
@@ -181,7 +181,7 @@ func TestSummary(t *testing.T) {
 func TestSummaryError(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("aggregate", "snapshot", "source", "cpu").Return(
-		map[string]interface{}{}, DbError)
+		map[string]interface{}{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot/source/cpu/summary", nil)
