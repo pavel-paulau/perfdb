@@ -1,7 +1,7 @@
 perfkeeper
 ==========
 
-[![Build Status](https://travis-ci.org/pavel-paulau/perfkeeper.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfkeeper) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfkeeper.svg)](https://coveralls.io/r/pavel-paulau/perfkeeper)
+[![Build Status](https://travis-ci.org/pavel-paulau/perfkeeper.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfkeeper) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfkeeper.svg)](https://coveralls.io/r/pavel-paulau/perfkeeper) [![GoDoc](https://godoc.org/github.com/pavel-paulau/perfkeeper?status.svg)](https://godoc.org/github.com/pavel-paulau/perfkeeper)
 
 **perfkeeper** is a storage for performance measurements. It's fast, flexible and reliable.
 
