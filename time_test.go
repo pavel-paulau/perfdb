@@ -2,27 +2,20 @@ package main
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTimestampParser(t *testing.T) {
-	// nanoseconds
 	tsNano := ParseTimestamp("1411534805453497432")
-	if tsNano != 1411534805453497432 {
-		t.Errorf("Invalid ns: %v != %v", tsNano, 1411534805453497432)
-	}
-	// microseconds
+	assert.Equal(t, tsNano, 1411534805453497432, "Invalid ns")
+
 	tsNano = ParseTimestamp("1411534805453497")
-	if tsNano != 1411534805453497000 {
-		t.Errorf("Invalid us: %v != %v", tsNano, 1411534805453497000)
-	}
-	// milliseconds
+	assert.Equal(t, tsNano, 1411534805453497000, "Invalid us")
+
 	tsNano = ParseTimestamp("1411534805453")
-	if tsNano != 1411534805453000000 {
-		t.Errorf("Invalid ms: %v != %v", tsNano, 1411534805453000000)
-	}
-	// seconds
+	assert.Equal(t, tsNano, 1411534805453000000, "Invalid ms")
+
 	tsNano = ParseTimestamp("1411534805")
-	if tsNano != 1411534805000000000 {
-		t.Errorf("Invalid ms: %v != %v", tsNano, 1411534805000000000)
-	}
+	assert.Equal(t, tsNano, 1411534805000000000, "Invalid s")
 }
