@@ -1,0 +1,12 @@
+language: go
+go:
+  - 1.2
+  - tip
+
+install:
+  - go get github.com/alexcesaro/log/stdlog
+  - go get github.com/gorilla/mux
+  - go get github.com/stretchr/testify/assert
+  - go get github.com/stretchr/testify/mock
+  - go get labix.org/v2/mgo
+  - go get labix.org/v2/mgo/bson
