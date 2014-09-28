@@ -88,9 +88,8 @@ func (mongo *MongoHandler) ListMetrics(dbname, collection string) ([]string, err
 	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
 		Logger.Critical(err)
 		return []string{}, err
-	} else {
-		return metrics, nil
 	}
+	return metrics, nil
 }
 
 func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[string]float64, error) {
@@ -102,13 +101,12 @@ func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[st
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
 		Logger.Critical(err)
 		return map[string]float64{}, err
-	} else {
-		values := map[string]float64{}
-		for _, doc := range docs {
-			values[doc["ts"].(string)] = doc["v"].(float64)
-		}
-		return values, nil
 	}
+	values := map[string]float64{}
+	for _, doc := range docs {
+		values[doc["ts"].(string)] = doc["v"].(float64)
+	}
+	return values, nil
 }
 
 func (mongo *MongoHandler) InsertSample(dbname, collection string, sample map[string]interface{}) error {
@@ -119,13 +117,11 @@ func (mongo *MongoHandler) InsertSample(dbname, collection string, sample map[st
 	if err := _collection.Insert(sample); err != nil {
 		Logger.Critical(err)
 		return err
-	} else {
-		Logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 	}
+	Logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 
 	for _, key := range []string{"m", "ts"} {
-		err := _collection.EnsureIndexKey(key)
-		if err != nil {
+		if err := _collection.EnsureIndexKey(key); err != nil {
 			Logger.Critical(err)
 			return err
 		}
