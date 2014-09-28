@@ -11,11 +11,20 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
+type StorageHandler interface {
+	ListDatabases() ([]string, error)
+	ListCollections(dbname string) ([]string, error)
+	ListMetrics(dbname, collection string) ([]string, error)
+	InsertSample(dbname, collection string, sample map[string]interface{}) error
+	FindValues(dbname, collection, metric string) (map[string]float64, error)
+	Aggregate(dbname, collection, metric string) (map[string]interface{}, error)
+}
+
 type MongoHandler struct {
 	Session *mgo.Session
 }
 
-func NewStorage() (*MongoHandler, error) {
+func NewMongoHandler() (*MongoHandler, error) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   []string{"127.0.0.1"},
 		Timeout: 30 * time.Second,
@@ -58,7 +67,7 @@ func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
 	all_collections, err := _db.CollectionNames()
 	if err != nil {
 		Logger.Critical(err)
-		return nil, err
+		return []string{}, err
 	}
 
 	collections := []string{}
@@ -78,7 +87,7 @@ func (mongo *MongoHandler) ListMetrics(dbname, collection string) ([]string, err
 	var metrics []string
 	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
 		Logger.Critical(err)
-		return nil, err
+		return []string{}, err
 	} else {
 		return metrics, nil
 	}
@@ -92,7 +101,7 @@ func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[st
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
 		Logger.Critical(err)
-		return nil, err
+		return map[string]float64{}, err
 	} else {
 		values := map[string]float64{}
 		for _, doc := range docs {
@@ -164,7 +173,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 	summaries := []map[string]interface{}{}
 	if err := pipe.All(&summaries); err != nil {
 		Logger.Critical(err)
-		return nil, err
+		return map[string]interface{}{}, err
 	}
 	summary := summaries[0]
 	delete(summary, "_id")
@@ -172,7 +181,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
 		Logger.Critical(err)
-		return nil, err
+		return map[string]interface{}{}, err
 	}
 	values := []float64{}
 	for _, doc := range docs {

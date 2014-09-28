@@ -7,12 +7,11 @@ import (
 	"runtime"
 
 	"github.com/alexcesaro/log/stdlog"
-	"github.com/gorilla/mux"
 )
 
 var Logger = stdlog.GetFromFlags()
 
-var Storage *MongoHandler
+var Storage StorageHandler
 
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -26,7 +25,7 @@ func main() {
 
 	// Storage initialization
 	var err error
-	if Storage, err = NewStorage(); err != nil {
+	if Storage, err = NewMongoHandler(); err != nil {
 		os.Exit(1)
 	}
 
@@ -36,16 +35,7 @@ func main() {
 	http.Handle("/favicon.ico", http.FileServer(http.Dir(app)))
 
 	// RESTful API
-	r := mux.NewRouter()
-	r.StrictSlash(true)
-	r.HandleFunc("/", ListDatabases).Methods("GET")
-	r.HandleFunc("/{db}", ListSources).Methods("GET")
-	r.HandleFunc("/{db}/{source}", ListMetrics).Methods("GET")
-	r.HandleFunc("/{db}/{source}", AddSamples).Methods("POST")
-	r.HandleFunc("/{db}/{source}/{metric}", GetRawValues).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/summary", GetSummary).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
-	http.Handle("/", r)
+	http.Handle("/", NewRouter())
 
 	// Banner and launcher
 	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://0.0.0.0:8080/\n")

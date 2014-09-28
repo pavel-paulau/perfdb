@@ -27,6 +27,20 @@ func (r Response) String() (s string) {
 	return
 }
 
+func NewRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.StrictSlash(true)
+	r.HandleFunc("/", ListDatabases).Methods("GET")
+	r.HandleFunc("/{db}", ListSources).Methods("GET")
+	r.HandleFunc("/{db}/{source}", ListMetrics).Methods("GET")
+	r.HandleFunc("/{db}/{source}", AddSamples).Methods("POST")
+	r.HandleFunc("/{db}/{source}/{metric}", GetRawValues).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/summary", GetSummary).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
+
+	return r
+}
+
 func ListDatabases(rw http.ResponseWriter, r *http.Request) {
 	databases, err := Storage.ListDatabases()
 	if err != nil {
