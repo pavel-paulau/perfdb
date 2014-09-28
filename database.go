@@ -11,62 +11,62 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-type StorageHandler interface {
-	ListDatabases() ([]string, error)
-	ListCollections(dbname string) ([]string, error)
-	ListMetrics(dbname, collection string) ([]string, error)
-	InsertSample(dbname, collection string, sample map[string]interface{}) error
-	FindValues(dbname, collection, metric string) (map[string]float64, error)
-	Aggregate(dbname, collection, metric string) (map[string]interface{}, error)
+type storageHandler interface {
+	listDatabases() ([]string, error)
+	listCollections(dbname string) ([]string, error)
+	listMetrics(dbname, collection string) ([]string, error)
+	insertSample(dbname, collection string, sample map[string]interface{}) error
+	findValues(dbname, collection, metric string) (map[string]float64, error)
+	aggregate(dbname, collection, metric string) (map[string]interface{}, error)
 }
 
-type MongoHandler struct {
+type mongoHandler struct {
 	Session *mgo.Session
 }
 
-func NewMongoHandler() (*MongoHandler, error) {
+func newMongoHandler() (*mongoHandler, error) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   []string{"127.0.0.1"},
 		Timeout: 30 * time.Second,
 	}
 
-	Logger.Info("Connecting to database...")
+	logger.Info("Connecting to database...")
 	if session, err := mgo.DialWithInfo(dialInfo); err != nil {
-		Logger.Criticalf("Failed to connect to database: %s", err)
+		logger.Criticalf("Failed to connect to database: %s", err)
 		return nil, err
 	} else {
-		Logger.Info("Connection established.")
+		logger.Info("Connection established.")
 		session.SetMode(mgo.Monotonic, true)
-		return &MongoHandler{session}, nil
+		return &mongoHandler{session}, nil
 	}
 }
 
-var DBPREFIX = "perf"
+var dbPrefix = "perf"
 
-func (mongo *MongoHandler) ListDatabases() ([]string, error) {
+func (mongo *mongoHandler) listDatabases() ([]string, error) {
 	allDbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return nil, err
 	}
 
 	dbs := []string{}
 	for _, db := range allDbs {
-		if strings.HasPrefix(db, DBPREFIX) {
-			dbs = append(dbs, strings.Replace(db, DBPREFIX, "", 1))
+		if strings.HasPrefix(db, dbPrefix) {
+			dbs = append(dbs, strings.Replace(db, dbPrefix, "", 1))
 		}
 	}
 	return dbs, nil
 }
 
-func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
+func (mongo *mongoHandler) listCollections(dbname string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_db := session.DB(DBPREFIX + dbname)
+	_db := session.DB(dbPrefix + dbname)
 
 	allCollections, err := _db.CollectionNames()
 	if err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return []string{}, err
 	}
 
@@ -79,27 +79,27 @@ func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
 	return collections, err
 }
 
-func (mongo *MongoHandler) ListMetrics(dbname, collection string) ([]string, error) {
+func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(DBPREFIX + dbname).C(collection)
+	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	var metrics []string
 	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return []string{}, err
 	}
 	return metrics, nil
 }
 
-func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[string]float64, error) {
+func (mongo *mongoHandler) findValues(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(DBPREFIX + dbname).C(collection)
+	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return map[string]float64{}, err
 	}
 	values := map[string]float64{}
@@ -109,20 +109,20 @@ func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[st
 	return values, nil
 }
 
-func (mongo *MongoHandler) InsertSample(dbname, collection string, sample map[string]interface{}) error {
+func (mongo *mongoHandler) insertSample(dbname, collection string, sample map[string]interface{}) error {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(DBPREFIX + dbname).C(collection)
+	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	if err := _collection.Insert(sample); err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return err
 	}
-	Logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
+	logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 
 	for _, key := range []string{"m", "ts"} {
 		if err := _collection.EnsureIndexKey(key); err != nil {
-			Logger.Critical(err)
+			logger.Critical(err)
 			return err
 		}
 	}
@@ -142,10 +142,10 @@ func calcPercentile(data []float64, p float64) float64 {
 	}
 }
 
-func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
+func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(DBPREFIX + dbname).C(collection)
+	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	pipe := _collection.Pipe(
 		[]bson.M{
@@ -168,7 +168,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 	)
 	summaries := []map[string]interface{}{}
 	if err := pipe.All(&summaries); err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return map[string]interface{}{}, err
 	}
 	summary := summaries[0]
@@ -176,7 +176,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
-		Logger.Critical(err)
+		logger.Critical(err)
 		return map[string]interface{}{}, err
 	}
 	values := []float64{}

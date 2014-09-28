@@ -12,11 +12,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Response struct {
+type httpResponse struct {
 	Raw interface{}
 }
 
-func (r Response) String() (s string) {
+func (r httpResponse) String() (s string) {
 	b, err := json.Marshal(r.Raw)
 	if err != nil {
 		b, err = json.Marshal(map[string]string{
@@ -27,84 +27,84 @@ func (r Response) String() (s string) {
 	return
 }
 
-func NewRouter() *mux.Router {
+func newRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
-	r.HandleFunc("/", ListDatabases).Methods("GET")
-	r.HandleFunc("/{db}", ListSources).Methods("GET")
-	r.HandleFunc("/{db}/{source}", ListMetrics).Methods("GET")
-	r.HandleFunc("/{db}/{source}", AddSamples).Methods("POST")
-	r.HandleFunc("/{db}/{source}/{metric}", GetRawValues).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/summary", GetSummary).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/linechart", GetLineChart).Methods("GET")
+	r.HandleFunc("/", listDatabases).Methods("GET")
+	r.HandleFunc("/{db}", listSources).Methods("GET")
+	r.HandleFunc("/{db}/{source}", listMetrics).Methods("GET")
+	r.HandleFunc("/{db}/{source}", addSamples).Methods("POST")
+	r.HandleFunc("/{db}/{source}/{metric}", getRawValues).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/summary", getSummary).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/linechart", getLineChart).Methods("GET")
 
 	return r
 }
 
-func ListDatabases(rw http.ResponseWriter, r *http.Request) {
-	databases, err := Storage.ListDatabases()
+func listDatabases(rw http.ResponseWriter, r *http.Request) {
+	databases, err := storage.listDatabases()
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, Response{databases})
+		fmt.Fprint(rw, httpResponse{databases})
 	}
 }
 
-func ListSources(rw http.ResponseWriter, r *http.Request) {
+func listSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	db := vars["db"]
 
-	if sources, err := Storage.ListCollections(db); err != nil {
+	if sources, err := storage.listCollections(db); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, Response{sources})
+		fmt.Fprint(rw, httpResponse{sources})
 	}
 }
 
-func ListMetrics(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	db := vars["db"]
-	source := vars["source"]
-
-	if metrics, err := Storage.ListMetrics(db, source); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, Response{metrics})
-	}
-}
-
-func GetRawValues(rw http.ResponseWriter, r *http.Request) {
+func listMetrics(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	db := vars["db"]
 	source := vars["source"]
-	metric := vars["metric"]
 
-	if values, err := Storage.FindValues(db, source, metric); err != nil {
+	if metrics, err := storage.listMetrics(db, source); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, Response{values})
+		fmt.Fprint(rw, httpResponse{metrics})
 	}
 }
 
-func GetSummary(rw http.ResponseWriter, r *http.Request) {
+func getRawValues(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	db := vars["db"]
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if values, err := Storage.Aggregate(db, source, metric); err != nil {
+	if values, err := storage.findValues(db, source, metric); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, Response{values})
+		fmt.Fprint(rw, httpResponse{values})
 	}
 }
 
-func GetLineChart(rw http.ResponseWriter, r *http.Request) {
+func getSummary(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	db := vars["db"]
+	source := vars["source"]
+	metric := vars["metric"]
+
+	if values, err := storage.aggregate(db, source, metric); err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+	} else {
+		rw.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(rw, httpResponse{values})
+	}
+}
+
+func getLineChart(rw http.ResponseWriter, r *http.Request) {
 	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/"
 
 	if content, err := ioutil.ReadFile(app + "app/linechart.html"); err != nil {
@@ -115,10 +115,10 @@ func GetLineChart(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddSamples(rw http.ResponseWriter, r *http.Request) {
+func addSamples(rw http.ResponseWriter, r *http.Request) {
 	var tsNano int64
 	if timestamps, ok := r.URL.Query()["ts"]; ok {
-		tsNano = ParseTimestamp(timestamps[0])
+		tsNano = parseTimestamp(timestamps[0])
 	} else {
 		tsNano = time.Now().UnixNano()
 	}
@@ -143,6 +143,6 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 			"m":  m,
 			"v":  v,
 		}
-		go Storage.InsertSample(db, source, sample)
+		go storage.insertSample(db, source, sample)
 	}
 }

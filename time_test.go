@@ -7,15 +7,15 @@ import (
 )
 
 func TestTimestampParser(t *testing.T) {
-	tsNano := ParseTimestamp("1411534805453497432")
+	tsNano := parseTimestamp("1411534805453497432")
 	assert.Equal(t, tsNano, 1411534805453497432, "Invalid ns")
 
-	tsNano = ParseTimestamp("1411534805453497")
+	tsNano = parseTimestamp("1411534805453497")
 	assert.Equal(t, tsNano, 1411534805453497000, "Invalid us")
 
-	tsNano = ParseTimestamp("1411534805453")
+	tsNano = parseTimestamp("1411534805453")
 	assert.Equal(t, tsNano, 1411534805453000000, "Invalid ms")
 
-	tsNano = ParseTimestamp("1411534805")
+	tsNano = parseTimestamp("1411534805")
 	assert.Equal(t, tsNano, 1411534805000000000, "Invalid s")
 }

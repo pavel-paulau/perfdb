@@ -9,13 +9,13 @@ import (
 	"github.com/alexcesaro/log/stdlog"
 )
 
-var Logger = stdlog.GetFromFlags()
+var logger = stdlog.GetFromFlags()
 
-var Storage StorageHandler
+var storage storageHandler
 
-func Log(handler http.Handler) http.Handler {
+func requestLog(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		Logger.Infof("%s %s", r.Method, r.URL)
+		logger.Infof("%s %s", r.Method, r.URL)
 		handler.ServeHTTP(rw, r)
 	})
 }
@@ -25,7 +25,7 @@ func main() {
 
 	// Storage initialization
 	var err error
-	if Storage, err = NewMongoHandler(); err != nil {
+	if storage, err = newMongoHandler(); err != nil {
 		os.Exit(1)
 	}
 
@@ -35,9 +35,9 @@ func main() {
 	http.Handle("/favicon.ico", http.FileServer(http.Dir(app)))
 
 	// RESTful API
-	http.Handle("/", NewRouter())
+	http.Handle("/", newRouter())
 
 	// Banner and launcher
 	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://0.0.0.0:8080/\n")
-	Logger.Critical(http.ListenAndServe("0.0.0.0:8080", Log(http.DefaultServeMux)))
+	logger.Critical(http.ListenAndServe("0.0.0.0:8080", requestLog(http.DefaultServeMux)))
 }
