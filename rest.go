@@ -41,7 +41,7 @@ func ListSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	db := vars["db"]
 
-	if sources, err := Storage.ListCollections(DBPREFIX + db); err != nil {
+	if sources, err := Storage.ListCollections(db); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
@@ -54,7 +54,7 @@ func ListMetrics(rw http.ResponseWriter, r *http.Request) {
 	db := vars["db"]
 	source := vars["source"]
 
-	if metrics, err := Storage.ListMetrics(DBPREFIX+db, source); err != nil {
+	if metrics, err := Storage.ListMetrics(db, source); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
@@ -68,7 +68,7 @@ func GetRawValues(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if values, err := Storage.FindValues("perf"+db, source, metric); err != nil {
+	if values, err := Storage.FindValues(db, source, metric); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
@@ -82,7 +82,7 @@ func GetSummary(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if values, err := Storage.Aggregate("perf"+db, source, metric); err != nil {
+	if values, err := Storage.Aggregate(db, source, metric); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
@@ -129,6 +129,6 @@ func AddSamples(rw http.ResponseWriter, r *http.Request) {
 			"m":  m,
 			"v":  v,
 		}
-		go Storage.InsertSample(DBPREFIX+db, source, sample)
+		go Storage.InsertSample(db, source, sample)
 	}
 }

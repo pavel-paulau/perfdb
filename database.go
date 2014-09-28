@@ -32,6 +32,8 @@ func NewStorage() (*MongoHandler, error) {
 	}
 }
 
+var DBPREFIX = "perf"
+
 func (mongo *MongoHandler) ListDatabases() ([]string, error) {
 	all_dbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
@@ -41,17 +43,17 @@ func (mongo *MongoHandler) ListDatabases() ([]string, error) {
 
 	dbs := []string{}
 	for _, db := range all_dbs {
-		if strings.HasPrefix(db, "perf") {
-			dbs = append(dbs, strings.Replace(db, "perf", "", 1))
+		if strings.HasPrefix(db, DBPREFIX) {
+			dbs = append(dbs, strings.Replace(db, DBPREFIX, "", 1))
 		}
 	}
 	return dbs, nil
 }
 
-func (mongo *MongoHandler) ListCollections(db string) ([]string, error) {
+func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_db := session.DB(db)
+	_db := session.DB(DBPREFIX + dbname)
 
 	all_collections, err := _db.CollectionNames()
 	if err != nil {
@@ -68,10 +70,10 @@ func (mongo *MongoHandler) ListCollections(db string) ([]string, error) {
 	return collections, err
 }
 
-func (mongo *MongoHandler) ListMetrics(db, collection string) ([]string, error) {
+func (mongo *MongoHandler) ListMetrics(dbname, collection string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(db).C(collection)
+	_collection := session.DB(DBPREFIX + dbname).C(collection)
 
 	var metrics []string
 	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
@@ -82,10 +84,10 @@ func (mongo *MongoHandler) ListMetrics(db, collection string) ([]string, error) 
 	}
 }
 
-func (mongo *MongoHandler) FindValues(db, collection, metric string) (map[string]float64, error) {
+func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(db).C(collection)
+	_collection := session.DB(DBPREFIX + dbname).C(collection)
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
@@ -100,16 +102,16 @@ func (mongo *MongoHandler) FindValues(db, collection, metric string) (map[string
 	}
 }
 
-func (mongo *MongoHandler) InsertSample(db, collection string, sample map[string]interface{}) error {
+func (mongo *MongoHandler) InsertSample(dbname, collection string, sample map[string]interface{}) error {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(db).C(collection)
+	_collection := session.DB(DBPREFIX + dbname).C(collection)
 
 	if err := _collection.Insert(sample); err != nil {
 		logger.Critical(err)
 		return err
 	} else {
-		logger.Infof("Successfully added new sample to %s.%s", db, collection)
+		logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 	}
 
 	for _, key := range []string{"m", "ts"} {
@@ -135,10 +137,10 @@ func calcPercentile(data []float64, p float64) float64 {
 	}
 }
 
-func (mongo *MongoHandler) Aggregate(db, collection, metric string) (map[string]interface{}, error) {
+func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
 	defer session.Close()
-	_collection := session.DB(db).C(collection)
+	_collection := session.DB(DBPREFIX + dbname).C(collection)
 
 	pipe := _collection.Pipe(
 		[]bson.M{

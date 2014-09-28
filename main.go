@@ -12,8 +12,6 @@ import (
 
 var logger = stdlog.GetFromFlags()
 
-var DBPREFIX = "perf"
-
 var Storage *MongoHandler
 
 func Log(handler http.Handler) http.Handler {
