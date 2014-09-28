@@ -44,14 +44,14 @@ func NewMongoHandler() (*MongoHandler, error) {
 var DBPREFIX = "perf"
 
 func (mongo *MongoHandler) ListDatabases() ([]string, error) {
-	all_dbs, err := mongo.Session.DatabaseNames()
+	allDbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
 		Logger.Critical(err)
 		return nil, err
 	}
 
 	dbs := []string{}
-	for _, db := range all_dbs {
+	for _, db := range allDbs {
 		if strings.HasPrefix(db, DBPREFIX) {
 			dbs = append(dbs, strings.Replace(db, DBPREFIX, "", 1))
 		}
@@ -64,14 +64,14 @@ func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
 	defer session.Close()
 	_db := session.DB(DBPREFIX + dbname)
 
-	all_collections, err := _db.CollectionNames()
+	allCollections, err := _db.CollectionNames()
 	if err != nil {
 		Logger.Critical(err)
 		return []string{}, err
 	}
 
 	collections := []string{}
-	for _, collection := range all_collections {
+	for _, collection := range allCollections {
 		if collection != "system.indexes" {
 			collections = append(collections, collection)
 		}
