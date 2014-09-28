@@ -6,8 +6,7 @@ import (
 )
 
 func ParseTimestamp(ts string) int64 {
-	tsInt, err := strconv.ParseInt(ts, 10, 64)
-	if err == nil {
+	if tsInt, err := strconv.ParseInt(ts, 10, 64); err == nil {
 		switch {
 		case tsInt > 1e18: // nanosecond timestamps
 			return time.Unix(tsInt/1e9, tsInt%1e9).UnixNano()
@@ -18,6 +17,9 @@ func ParseTimestamp(ts string) int64 {
 		case tsInt > 1e9: // second timestamps
 			return time.Unix(tsInt, 0).UnixNano()
 		}
+	} else {
+		Logger.Warningf("Invalid timestamp, using current time instead.")
+		return time.Now().UnixNano()
 	}
-	return time.Now().UnixNano()
+	panic("Unreachable")
 }
