@@ -15,22 +15,21 @@ type MongoHandler struct {
 	Session *mgo.Session
 }
 
-func (mongo *MongoHandler) Init() error {
+func NewStorage() (*MongoHandler, error) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   []string{"127.0.0.1"},
 		Timeout: 30 * time.Second,
 	}
 
-	var err error
 	logger.Info("Connecting to database...")
-	if mongo.Session, err = mgo.DialWithInfo(dialInfo); err != nil {
+	if session, err := mgo.DialWithInfo(dialInfo); err != nil {
 		logger.Criticalf("Failed to connect to database: %s", err)
-		return err
+		return nil, err
 	} else {
 		logger.Info("Connection established.")
+		session.SetMode(mgo.Monotonic, true)
+		return &MongoHandler{session}, nil
 	}
-	mongo.Session.SetMode(mgo.Monotonic, true)
-	return nil
 }
 
 func (mongo *MongoHandler) ListDatabases() ([]string, error) {

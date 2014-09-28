@@ -14,7 +14,7 @@ var logger = stdlog.GetFromFlags()
 
 var DBPREFIX = "perf"
 
-var Storage = MongoHandler{}
+var Storage *MongoHandler
 
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -43,8 +43,8 @@ func main() {
 
 	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://0.0.0.0:8080/\n")
 
-	err := Storage.Init()
-	if err != nil {
+	var err error
+	if Storage, err = NewStorage(); err != nil {
 		os.Exit(1)
 	}
 
