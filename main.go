@@ -10,13 +10,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var logger = stdlog.GetFromFlags()
+var Logger = stdlog.GetFromFlags()
 
 var Storage *MongoHandler
 
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		logger.Infof("%s %s", r.Method, r.URL)
+		Logger.Infof("%s %s", r.Method, r.URL)
 		handler.ServeHTTP(rw, r)
 	})
 }
@@ -46,5 +46,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Critical(http.ListenAndServe("0.0.0.0:8080", Log(http.DefaultServeMux)))
+	Logger.Critical(http.ListenAndServe("0.0.0.0:8080", Log(http.DefaultServeMux)))
 }

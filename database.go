@@ -21,12 +21,12 @@ func NewStorage() (*MongoHandler, error) {
 		Timeout: 30 * time.Second,
 	}
 
-	logger.Info("Connecting to database...")
+	Logger.Info("Connecting to database...")
 	if session, err := mgo.DialWithInfo(dialInfo); err != nil {
-		logger.Criticalf("Failed to connect to database: %s", err)
+		Logger.Criticalf("Failed to connect to database: %s", err)
 		return nil, err
 	} else {
-		logger.Info("Connection established.")
+		Logger.Info("Connection established.")
 		session.SetMode(mgo.Monotonic, true)
 		return &MongoHandler{session}, nil
 	}
@@ -37,7 +37,7 @@ var DBPREFIX = "perf"
 func (mongo *MongoHandler) ListDatabases() ([]string, error) {
 	all_dbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (mongo *MongoHandler) ListCollections(dbname string) ([]string, error) {
 
 	all_collections, err := _db.CollectionNames()
 	if err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func (mongo *MongoHandler) ListMetrics(dbname, collection string) ([]string, err
 
 	var metrics []string
 	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	} else {
 		return metrics, nil
@@ -91,7 +91,7 @@ func (mongo *MongoHandler) FindValues(dbname, collection, metric string) (map[st
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	} else {
 		values := map[string]float64{}
@@ -108,16 +108,16 @@ func (mongo *MongoHandler) InsertSample(dbname, collection string, sample map[st
 	_collection := session.DB(DBPREFIX + dbname).C(collection)
 
 	if err := _collection.Insert(sample); err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return err
 	} else {
-		logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
+		Logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 	}
 
 	for _, key := range []string{"m", "ts"} {
 		err := _collection.EnsureIndexKey(key)
 		if err != nil {
-			logger.Critical(err)
+			Logger.Critical(err)
 			return err
 		}
 	}
@@ -163,7 +163,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 	)
 	summaries := []map[string]interface{}{}
 	if err := pipe.All(&summaries); err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	}
 	summary := summaries[0]
@@ -171,7 +171,7 @@ func (mongo *MongoHandler) Aggregate(dbname, collection, metric string) (map[str
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
-		logger.Critical(err)
+		Logger.Critical(err)
 		return nil, err
 	}
 	values := []float64{}
