@@ -28,13 +28,13 @@ Let's say you collect CPU stats every 5 seconds, each sample is represented by a
 
 You can persist your measurements by sending the following HTTP request:
 
-    $ curl -X POST http://127.0.0.1:8080/benchmark_06252014/172.23.100.96 -d @sample.json
+    $ curl -XPOST http://localhost:8080/mybenchmark/app1 -d @sample.json
 
 Where:
 
-  `benchmark_06252014` is a common snapshot entity. You should change it before *any* test or benchmark iteration.
+  `mybenchmark` is a common snapshot entity. You should change it before *any* test or benchmark iteration.
 
-   `172.23.100.96` is a source name. In this case we are using IP address, it can be an application name (e.g., "nginx@172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
+   `app1` is a source name. In this case we are using application name, it can be an IP address (e.g., "172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
 
    `sample.json` is the JSON document which we described above.
 
@@ -45,9 +45,9 @@ Querying samples
 
 It cannot be simpler:
 
-    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys
+    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys
 
-output is a JSON document as well:
+Output is a JSON document as well:
 
     {"1403736306507708119": 12.3}
 
@@ -58,22 +58,22 @@ Listing snapshots, sources and metrics
 
 In order to list all snapshots:
 
-    $ curl http://127.0.0.1:8080/
+    $ curl http://localhost:8080/
 
 In order to list all sources for given snapshot:
 
-    $ curl http://127.0.0.18080/benchmark_06252014
+    $ curl http://localhost:8080/mybenchmark
 
 Getting a list of distinct metrics:
 
-    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96
+    $ curl http://localhost:8080/mybenchmark/app1
 
 Summary and visualization
 -------------------------
 
 This API returns JSON document with aggregated metrics:
 
-    $ curl http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys/summary
+    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys/summary
 
 output:
 
@@ -90,7 +90,7 @@ output:
 
 Built-in visualization using amazing D3 charts:
 
-    $ http://127.0.0.1:8080/benchmark_06252014/172.23.100.96/cpu_sys/linechart
+    $ http://localhost:8080/mybenchmark/app1/cpu_sys/linechart
 
 ![](docs/linechart.png)
 
@@ -101,7 +101,7 @@ Wait, how to install it?
 
 First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). Stable binaries are available at [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting **perfkeeper**:
+To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting the latest **perfkeeper**:
 
     $ go get github.com/pavel-paulau/perfkeeper
 
