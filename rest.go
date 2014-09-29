@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
+	"bitbucket.org/tebeka/nrsc"
 	"github.com/gorilla/mux"
 )
 
@@ -104,14 +106,29 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getLineChart(rw http.ResponseWriter, r *http.Request) {
-	app := os.Getenv("GOPATH") + "/src/github.com/pavel-paulau/perfkeeper/"
+func readHTML(path string) (string, error) {
+	var html nrsc.Resource
+	if html = nrsc.Get(path); html == nil {
+		return "", errors.New("cannot read HTML")
+	}
+	var htmlReader io.Reader
+	var err error
+	if htmlReader, err = html.Open(); err != nil {
+		return "", err
+	}
+	var content []byte
+	if content, err = ioutil.ReadAll(htmlReader); err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
 
-	if content, err := ioutil.ReadFile(app + "app/linechart.html"); err != nil {
+func getLineChart(rw http.ResponseWriter, r *http.Request) {
+	if content, err := readHTML("linechart.html"); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		rw.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(rw, string(content))
+		fmt.Fprintf(rw, string(content))
 	}
 }
 

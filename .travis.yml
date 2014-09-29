@@ -3,6 +3,7 @@ go:
   - 1.2
   - tip
 install:
+  - go get bitbucket.org/tebeka/nrsc
   - go get code.google.com/p/go.tools/cmd/cover
   - go get github.com/alexcesaro/log/stdlog
   - go get github.com/axw/gocov/gocov
