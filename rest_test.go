@@ -52,7 +52,7 @@ func TestListCollectionsError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "", rw.Body.String())
+	assert.Equal(t, "Internal Server Error", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -80,7 +80,7 @@ func TestListMetricsError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "", rw.Body.String())
+	assert.Equal(t, "Internal Server Error", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -110,7 +110,7 @@ func TestFinaValuesError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "", rw.Body.String())
+	assert.Equal(t, "Internal Server Error", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -189,6 +189,6 @@ func TestSummaryError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "", rw.Body.String())
+	assert.Equal(t, "Internal Server Error", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }

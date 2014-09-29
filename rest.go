@@ -47,6 +47,7 @@ func listDatabases(rw http.ResponseWriter, r *http.Request) {
 	databases, err := storage.listDatabases()
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(rw, httpResponse{databases})
@@ -59,6 +60,7 @@ func listSources(rw http.ResponseWriter, r *http.Request) {
 
 	if sources, err := storage.listCollections(db); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(rw, httpResponse{sources})
@@ -72,6 +74,7 @@ func listMetrics(rw http.ResponseWriter, r *http.Request) {
 
 	if metrics, err := storage.listMetrics(db, source); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(rw, httpResponse{metrics})
@@ -86,6 +89,7 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 
 	if values, err := storage.findValues(db, source, metric); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(rw, httpResponse{values})
@@ -100,6 +104,7 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 
 	if values, err := storage.aggregate(db, source, metric); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(rw, httpResponse{values})
@@ -126,6 +131,7 @@ func readHTML(path string) (string, error) {
 func getLineChart(rw http.ResponseWriter, r *http.Request) {
 	if content, err := readHTML("linechart.html"); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Internal Server Error")
 	} else {
 		rw.Header().Set("Content-Type", "text/html")
 		fmt.Fprintf(rw, string(content))
