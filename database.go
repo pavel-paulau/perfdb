@@ -173,6 +173,9 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		logger.Critical(err)
 		return map[string]interface{}{}, err
 	}
+	if len(summaries) == 0 {
+		return map[string]interface{}{}, nil
+	}
 	summary := summaries[0]
 	delete(summary, "_id")
 
