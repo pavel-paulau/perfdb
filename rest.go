@@ -67,11 +67,32 @@ func listDatabases(rw http.ResponseWriter, r *http.Request) {
 	validJSON(rw, databases)
 }
 
+func stringInSlice(a string, array []string) bool {
+	for _, b := range array {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func checkDbExists(rw http.ResponseWriter, dbname string) error {
+	if allDbs, err := storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "Not existing snapshot")
+		return errors.New("Not existing snapshot")
+	}
+	return nil
+}
+
 func listSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	db := vars["db"]
+	dbname := vars["db"]
 
-	sources, err := storage.listCollections(db)
+	if err := checkDbExists(rw, dbname); err != nil {
+		return
+	}
+	sources, err := storage.listCollections(dbname)
 	if err != nil {
 		internalError(rw)
 		return
@@ -81,10 +102,14 @@ func listSources(rw http.ResponseWriter, r *http.Request) {
 
 func listMetrics(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	db := vars["db"]
+	dbname := vars["db"]
 	source := vars["source"]
 
-	metrics, err := storage.listMetrics(db, source)
+	if err := checkDbExists(rw, dbname); err != nil {
+		return
+	}
+
+	metrics, err := storage.listMetrics(dbname, source)
 	if err != nil {
 		internalError(rw)
 		return
@@ -94,11 +119,15 @@ func listMetrics(rw http.ResponseWriter, r *http.Request) {
 
 func getRawValues(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	db := vars["db"]
+	dbname := vars["db"]
 	source := vars["source"]
 	metric := vars["metric"]
 
-	values, err := storage.findValues(db, source, metric)
+	if err := checkDbExists(rw, dbname); err != nil {
+		return
+	}
+
+	values, err := storage.findValues(dbname, source, metric)
 	if err != nil {
 		internalError(rw)
 		return
@@ -108,11 +137,15 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 
 func getSummary(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	db := vars["db"]
+	dbname := vars["db"]
 	source := vars["source"]
 	metric := vars["metric"]
 
-	values, err := storage.aggregate(db, source, metric)
+	if err := checkDbExists(rw, dbname); err != nil {
+		return
+	}
+
+	values, err := storage.aggregate(dbname, source, metric)
 	if err != nil {
 		internalError(rw)
 		return
@@ -156,7 +189,7 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 	ts := strconv.FormatInt(tsNano, 10)
 
 	vars := mux.Vars(r)
-	db := vars["db"]
+	dbname := vars["db"]
 	source := vars["source"]
 
 	var samples map[string]interface{}
@@ -174,6 +207,6 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 			"m":  m,
 			"v":  v,
 		}
-		go storage.insertSample(db, source, sample)
+		go storage.insertSample(dbname, source, sample)
 	}
 }

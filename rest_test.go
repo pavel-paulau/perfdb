@@ -28,6 +28,7 @@ func TestListDatabases(t *testing.T) {
 
 func TestListCollections(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listCollections", "snapshot").Return([]string{"source"}, nil)
 	storage = storageMock
 
@@ -44,6 +45,7 @@ var ErrTest = errors.New("fake test error")
 
 func TestListCollectionsError(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listCollections", "snapshot").Return([]string{}, ErrTest)
 	storage = storageMock
 
@@ -56,8 +58,23 @@ func TestListCollectionsError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
+func TestListCollectionsWrongSnapshot(t *testing.T) {
+	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
+	storage = storageMock
+
+	req, _ := http.NewRequest("GET", "/snapshotx", nil)
+	rw := httptest.NewRecorder()
+	newRouter().ServeHTTP(rw, req)
+
+	assert.Equal(t, 400, rw.Code)
+	assert.Equal(t, "Not existing snapshot", rw.Body.String())
+	storageMock.Mock.AssertExpectations(t)
+}
+
 func TestListMetrics(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{"cpu_user", "cpu_sys"}, nil)
 	storage = storageMock
 
@@ -72,6 +89,7 @@ func TestListMetrics(t *testing.T) {
 
 func TestListMetricsError(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{}, ErrTest)
 	storage = storageMock
 
@@ -84,8 +102,23 @@ func TestListMetricsError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
+func TestListMetricsWrongSnapshot(t *testing.T) {
+	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
+	storage = storageMock
+
+	req, _ := http.NewRequest("GET", "/snapshotx/source", nil)
+	rw := httptest.NewRecorder()
+	newRouter().ServeHTTP(rw, req)
+
+	assert.Equal(t, 400, rw.Code)
+	assert.Equal(t, "Not existing snapshot", rw.Body.String())
+	storageMock.Mock.AssertExpectations(t)
+}
+
 func TestFindValues(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("findValues",
 		"snapshot", "source", "cpu").Return(map[string]float64{"1411534805453497432": 100}, nil)
 	storage = storageMock
@@ -101,6 +134,7 @@ func TestFindValues(t *testing.T) {
 
 func TestFinaValuesError(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("findValues",
 		"snapshot", "source", "cpu").Return(map[string]float64{}, ErrTest)
 	storage = storageMock
@@ -165,6 +199,7 @@ func TestInsertBadSample(t *testing.T) {
 
 func TestSummary(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("aggregate",
 		"snapshot", "source", "cpu").Return(map[string]interface{}{"mean": 100}, nil)
 	storage = storageMock
@@ -180,6 +215,7 @@ func TestSummary(t *testing.T) {
 
 func TestSummaryError(t *testing.T) {
 	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("aggregate", "snapshot", "source", "cpu").Return(
 		map[string]interface{}{}, ErrTest)
 	storage = storageMock
