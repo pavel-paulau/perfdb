@@ -142,7 +142,7 @@ func calcPercentile(data []float64, p float64) float64 {
 	}
 }
 
-var AggLimit = 10000
+var queryLimit = 10000
 
 func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
@@ -186,7 +186,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		return map[string]interface{}{}, err
 	}
 
-	if count < AggLimit {
+	if count < queryLimit {
 		// Don't perform in-memory aggregation if limit exceeded
 		var docs []map[string]interface{}
 		if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {

@@ -68,7 +68,7 @@ func TestListCollectionsWrongSnapshot(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 400, rw.Code)
-	assert.Equal(t, "Not existing snapshot", rw.Body.String())
+	assert.Equal(t, "not existing snapshot", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -112,7 +112,7 @@ func TestListMetricsWrongSnapshot(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 400, rw.Code)
-	assert.Equal(t, "Not existing snapshot", rw.Body.String())
+	assert.Equal(t, "not existing snapshot", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 

@@ -79,8 +79,8 @@ func stringInSlice(a string, array []string) bool {
 func checkDbExists(rw http.ResponseWriter, dbname string) error {
 	if allDbs, err := storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(rw, "Not existing snapshot")
-		return errors.New("Not existing snapshot")
+		fmt.Fprintf(rw, "not existing snapshot")
+		return errors.New("not existing snapshot")
 	}
 	return nil
 }
