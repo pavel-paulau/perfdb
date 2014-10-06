@@ -120,7 +120,7 @@ func (mongo *mongoHandler) insertSample(dbname, collection string, sample map[st
 	}
 	logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 
-	for _, key := range []string{"m", "ts"} {
+	for _, key := range []string{"m", "ts", "v"} {
 		if err := _collection.EnsureIndexKey(key); err != nil {
 			logger.Critical(err)
 			return err
@@ -141,6 +141,8 @@ func calcPercentile(data []float64, p float64) float64 {
 		return data[int(f)]*(c-k) + data[int(c)]*(k-f)
 	}
 }
+
+var AggLimit = 10000
 
 func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
@@ -174,18 +176,40 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 	summary := summaries[0]
 	delete(summary, "_id")
 
-	var docs []map[string]interface{}
-	if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
+	var count int
+	var err error
+	if count, err = _collection.Find(bson.M{"m": metric}).Count(); err != nil {
 		logger.Critical(err)
 		return map[string]interface{}{}, err
 	}
-	values := []float64{}
-	for _, doc := range docs {
-		values = append(values, doc["v"].(float64))
-	}
-	for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
-		p := fmt.Sprintf("p%v", percentile*100)
-		summary[p] = calcPercentile(values, percentile)
+
+	if count < AggLimit {
+		// Don't perform in-memory aggregation if limit exceeded
+		var docs []map[string]interface{}
+		if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
+			logger.Critical(err)
+			return map[string]interface{}{}, err
+		}
+		values := []float64{}
+		for _, doc := range docs {
+			values = append(values, doc["v"].(float64))
+		}
+		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
+			p := fmt.Sprintf("p%v", percentile*100)
+			summary[p] = calcPercentile(values, percentile)
+		}
+	} else {
+		// Calculate percentiles using index-based sorting at database level
+		var result []map[string]interface{}
+		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
+			skip := int(float64(count)*percentile) - 1
+			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).Limit(1).All(&result); err != nil {
+				logger.Critical(err)
+				return map[string]interface{}{}, err
+			}
+			p := fmt.Sprintf("p%v", percentile*100)
+			summary[p] = result[0]["v"].(float64)
+		}
 	}
 
 	return summary, nil
