@@ -43,28 +43,40 @@ func newRouter() *mux.Router {
 	return r
 }
 
+func internalError(rw http.ResponseWriter) {
+	rw.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(rw, "Internal Server Error")
+}
+
+func validJSON(rw http.ResponseWriter, data interface{}) {
+	rw.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(rw, httpResponse{data})
+}
+
+func validHTML(rw http.ResponseWriter, content string) {
+	rw.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(rw, content)
+}
+
 func listDatabases(rw http.ResponseWriter, r *http.Request) {
 	databases, err := storage.listDatabases()
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, httpResponse{databases})
+		internalError(rw)
+		return
 	}
+	validJSON(rw, databases)
 }
 
 func listSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	db := vars["db"]
 
-	if sources, err := storage.listCollections(db); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, httpResponse{sources})
+	sources, err := storage.listCollections(db)
+	if err != nil {
+		internalError(rw)
+		return
 	}
+	validJSON(rw, sources)
 }
 
 func listMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -72,13 +84,12 @@ func listMetrics(rw http.ResponseWriter, r *http.Request) {
 	db := vars["db"]
 	source := vars["source"]
 
-	if metrics, err := storage.listMetrics(db, source); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, httpResponse{metrics})
+	metrics, err := storage.listMetrics(db, source)
+	if err != nil {
+		internalError(rw)
+		return
 	}
+	validJSON(rw, metrics)
 }
 
 func getRawValues(rw http.ResponseWriter, r *http.Request) {
@@ -87,13 +98,12 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if values, err := storage.findValues(db, source, metric); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, httpResponse{values})
+	values, err := storage.findValues(db, source, metric)
+	if err != nil {
+		internalError(rw)
+		return
 	}
+	validJSON(rw, values)
 }
 
 func getSummary(rw http.ResponseWriter, r *http.Request) {
@@ -102,13 +112,12 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if values, err := storage.aggregate(db, source, metric); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(rw, httpResponse{values})
+	values, err := storage.aggregate(db, source, metric)
+	if err != nil {
+		internalError(rw)
+		return
 	}
+	validJSON(rw, values)
 }
 
 func readHTML(path string) (string, error) {
@@ -129,13 +138,12 @@ func readHTML(path string) (string, error) {
 }
 
 func getLineChart(rw http.ResponseWriter, r *http.Request) {
-	if content, err := readHTML("linechart.html"); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "Internal Server Error")
-	} else {
-		rw.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(rw, string(content))
+	content, err := readHTML("linechart.html")
+	if err != nil {
+		internalError(rw)
+		return
 	}
+	validHTML(rw, content)
 }
 
 func addSamples(rw http.ResponseWriter, r *http.Request) {
