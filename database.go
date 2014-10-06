@@ -85,7 +85,7 @@ func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, err
 	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	var metrics []string
-	if err := _collection.Find(bson.M{}).Distinct("m", &metrics); err != nil {
+	if err := _collection.Find(bson.M{}).Sort("m").Distinct("m", &metrics); err != nil {
 		logger.Critical(err)
 		return []string{}, err
 	}
