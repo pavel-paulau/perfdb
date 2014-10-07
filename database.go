@@ -161,9 +161,10 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 					"_id": bson.M{
 						"metric": "$m",
 					},
-					"avg": bson.M{"$avg": "$v"},
-					"min": bson.M{"$min": "$v"},
-					"max": bson.M{"$max": "$v"},
+					"avg":   bson.M{"$avg": "$v"},
+					"min":   bson.M{"$min": "$v"},
+					"max":   bson.M{"$max": "$v"},
+					"count": bson.M{"$sum": 1},
 				},
 			},
 		},
