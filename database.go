@@ -180,13 +180,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 	summary := summaries[0]
 	delete(summary, "_id")
 
-	var count int
-	var err error
-	if count, err = _collection.Find(bson.M{"m": metric}).Count(); err != nil {
-		logger.Critical(err)
-		return map[string]interface{}{}, err
-	}
-
+	count := summary["count"].(int)
 	if count < queryLimit {
 		// Don't perform in-memory aggregation if limit exceeded
 		var docs []map[string]interface{}
