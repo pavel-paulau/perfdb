@@ -35,7 +35,10 @@ It cannot be simpler:
 
 Output is a JSON document as well:
 
-    {"1403736306507708119": 12.3}
+    {
+        "1403736306507708119": 12.3,
+        "1403736306629829527": 71.4
+    }
 
 where `1403736306507708119` is sample timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
 
