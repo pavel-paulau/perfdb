@@ -103,7 +103,7 @@ See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advance
 Wait, how to install it?
 ------------------------
 
-First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). Stable binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). The latest stable **perfkeeper** binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
 To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting the latest **perfkeeper**:
 
