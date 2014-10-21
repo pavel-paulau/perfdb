@@ -7,7 +7,7 @@ perfkeeper
 
 Why?
 ----
-There are many beautiful systems like [cube](https://github.com/square/cube). Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements.
+There are many beautiful systems like [cube](https://github.com/square/cube). Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements. Other time series databases such as [KairosDB](https://github.com/kairosdb/kairosdb) or [OpenTSDB](http://opentsdb.net/) are overcomplicated or have impractical dependencies. Let's put it this way, **perfkeeper** is the best choice if all great features of [InfluxDB](http://influxdb.com/) are not needed yet.
 
 **perfkeeper** was created to address daily needs of performance benchmarking. It allows to maintain arbitrary samples collected during relatively short period of time. All samples are grouped by data source (e.g., OS stats or database metrics). In turn, sources are grouped within data snapshot which represents single benchmarking iteration. There are no reducers, you get data as it is.
 
@@ -103,7 +103,7 @@ See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advance
 Wait, how to install it?
 ------------------------
 
-First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). Stable binaries are available at [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). Stable binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
 To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting the latest **perfkeeper**:
 
