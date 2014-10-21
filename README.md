@@ -32,7 +32,7 @@ You can persist your measurements by sending the following HTTP request:
 
 Where:
 
-  `mybenchmark` is a common snapshot entity. You should change it before *any* test or benchmark iteration.
+  `mybenchmark` is a common snapshot entity (time series database). You should change it before *any* test or benchmark iteration.
 
    `app1` is a source name. In this case we are using application name, it can be an IP address (e.g., "172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
 
