@@ -114,3 +114,9 @@ Running it:
     $ perfkeeper
 
 The command above will start HTTP listener on port 8080.
+
+Usage tips
+----------
+
+* The maximum supported number of samples per metric is ~2B.
+* It makes sense to bump up "open files limit" before intensive usage (via `ulimit -n`).
