@@ -44,6 +44,9 @@ func newMongoHandler() (*mongoHandler, error) {
 var dbPrefix = "perf"
 
 func (mongo *mongoHandler) listDatabases() ([]string, error) {
+	if err := mongo.Session.Ping(); err != nil {
+		mongo.Session.Refresh()
+	}
 	allDbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
 		logger.Critical(err)
