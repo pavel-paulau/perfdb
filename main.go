@@ -7,10 +7,11 @@ import (
 	"runtime"
 
 	"bitbucket.org/tebeka/nrsc"
-	"github.com/alexcesaro/log/stdlog"
+	"github.com/alexcesaro/log"
+	"github.com/alexcesaro/log/golog"
 )
 
-var logger = stdlog.GetFromFlags()
+var logger *golog.Logger
 
 var storage storageHandler
 
@@ -21,15 +22,18 @@ func requestLog(handler http.Handler) http.Handler {
 	})
 }
 
-func main() {
+func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// Storage initialization
+	logger = golog.New(os.Stdout, log.Info)
+
 	var err error
 	if storage, err = newMongoHandler(); err != nil {
 		os.Exit(1)
 	}
+}
 
+func main() {
 	// Static assets
 	nrsc.Handle("/static/")
 

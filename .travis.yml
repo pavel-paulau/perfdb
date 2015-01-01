@@ -5,7 +5,7 @@ go:
 install:
   - go get bitbucket.org/tebeka/nrsc
   - go get code.google.com/p/go.tools/cmd/cover
-  - go get github.com/alexcesaro/log/stdlog
+  - go get github.com/alexcesaro/log
   - go get github.com/axw/gocov/gocov
   - go get github.com/gorilla/mux
   - go get github.com/mattn/goveralls
