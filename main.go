@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 
 var logger *golog.Logger
 
+var address *string
+
 var storage storageHandler
 
 func requestLog(handler http.Handler) http.Handler {
@@ -24,6 +27,9 @@ func requestLog(handler http.Handler) http.Handler {
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
+	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
 
@@ -41,6 +47,7 @@ func main() {
 	http.Handle("/", newRouter())
 
 	// Banner and launcher
-	fmt.Println("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://0.0.0.0:8080/\n")
-	logger.Critical(http.ListenAndServe("0.0.0.0:8080", requestLog(http.DefaultServeMux)))
+	banner := fmt.Sprintf("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://%s/\n", *address)
+	fmt.Println(banner)
+	logger.Critical(http.ListenAndServe(*address, requestLog(http.DefaultServeMux)))
 }
