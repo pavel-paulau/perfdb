@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"bitbucket.org/tebeka/nrsc"
 	"github.com/alexcesaro/log"
@@ -14,7 +15,7 @@ import (
 
 var logger *golog.Logger
 
-var address *string
+var db, address *string
 
 var storage storageHandler
 
@@ -29,6 +30,7 @@ func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
+	db = flag.String("db", "127.0.0.1:27017", "comma separated database host[:port] addresses")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
@@ -37,7 +39,7 @@ func init() {
 func main() {
 	// Database handler
 	var err error
-	if storage, err = newMongoHandler(); err != nil {
+	if storage, err = newMongoHandler(strings.Split(*db, ",")); err != nil {
 		os.Exit(1)
 	}
 

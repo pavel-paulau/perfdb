@@ -24,9 +24,9 @@ type mongoHandler struct {
 	Session *mgo.Session
 }
 
-func newMongoHandler() (*mongoHandler, error) {
+func newMongoHandler(addrs []string) (*mongoHandler, error) {
 	dialInfo := &mgo.DialInfo{
-		Addrs:   []string{"127.0.0.1"},
+		Addrs:   addrs,
 		Timeout: 30 * time.Second,
 	}
 
