@@ -32,14 +32,15 @@ func init() {
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
+}
 
+func main() {
+	// Database handler
 	var err error
 	if storage, err = newMongoHandler(); err != nil {
 		os.Exit(1)
 	}
-}
 
-func main() {
 	// Static assets
 	nrsc.Handle("/static/")
 
