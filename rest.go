@@ -157,15 +157,19 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 func readHTML(path string) (string, error) {
 	var html nrsc.Resource
 	if html = nrsc.Get(path); html == nil {
-		return "", errors.New("cannot read HTML")
+		err := errors.New("cannot read HTML")
+		logger.Critical(err)
+		return "", err
 	}
 	var htmlReader io.Reader
 	var err error
 	if htmlReader, err = html.Open(); err != nil {
+		logger.Critical(err)
 		return "", err
 	}
 	var content []byte
 	if content, err = ioutil.ReadAll(htmlReader); err != nil {
+		logger.Critical(err)
 		return "", err
 	}
 	return string(content), nil
