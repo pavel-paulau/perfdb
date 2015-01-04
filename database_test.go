@@ -37,3 +37,8 @@ func (m *mongoMock) aggregate(dbname, collection, metric string) (map[string]int
 	args := m.Mock.Called(dbname, collection, metric)
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
+
+func (m *mongoMock) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
+	args := m.Mock.Called(dbname, collection, metric)
+	return args.Get(0).(*heatMap), args.Error(1)
+}

@@ -39,6 +39,7 @@ func newRouter() *mux.Router {
 	r.HandleFunc("/{db}/{source}/{metric}", getRawValues).Methods("GET")
 	r.HandleFunc("/{db}/{source}/{metric}/summary", getSummary).Methods("GET")
 	r.HandleFunc("/{db}/{source}/{metric}/linechart", getLineChart).Methods("GET")
+	r.HandleFunc("/{db}/{source}/{metric}/heatmap", getHeatMap).Methods("GET")
 
 	return r
 }
@@ -209,4 +210,22 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 		}
 		go storage.insertSample(dbname, source, sample)
 	}
+}
+
+func getHeatMap(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dbname := vars["db"]
+	source := vars["source"]
+	metric := vars["metric"]
+
+	if err := checkDbExists(rw, dbname); err != nil {
+		return
+	}
+
+	values, err := storage.getHeatMap(dbname, source, metric)
+	if err != nil {
+		internalError(rw)
+		return
+	}
+	validJSON(rw, values)
 }

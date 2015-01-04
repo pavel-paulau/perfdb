@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ type storageHandler interface {
 	insertSample(dbname, collection string, sample map[string]interface{}) error
 	findValues(dbname, collection, metric string) (map[string]float64, error)
 	aggregate(dbname, collection, metric string) (map[string]interface{}, error)
+	getHeatMap(dbname, collection, metric string) (*heatMap, error)
 }
 
 type mongoHandler struct {
@@ -145,7 +147,7 @@ func calcPercentile(data []float64, p float64) float64 {
 	}
 }
 
-var queryLimit = 10000
+const queryLimit = 10000
 
 func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
@@ -214,4 +216,90 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 	}
 
 	return summary, nil
+}
+
+type heatMap struct {
+	MinTS    int64   `json:"minTimestamp"`
+	MaxTS    int64   `json:"maxTimestamp"`
+	MaxValue float64 `json:"maxValue"`
+	Map      [][]int `json:"map"`
+}
+
+const (
+	height = 60
+	width  = 120
+)
+
+func newHeatMap() *heatMap {
+	hm := heatMap{}
+	hm.Map = [][]int{}
+	for y := 0; y < height; y++ {
+		hm.Map = append(hm.Map, []int{})
+		for x := 0; x < width; x++ {
+			hm.Map[y] = append(hm.Map[y], 0)
+		}
+	}
+	return &hm
+}
+
+func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
+	session := mongo.Session.New()
+	defer session.Close()
+	_collection := session.DB(dbPrefix + dbname).C(collection)
+
+	var doc map[string]interface{}
+	hm := newHeatMap()
+
+	// Min timestamp
+	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").One(&doc); err != nil {
+		logger.Critical(err)
+		return &heatMap{}, err
+	}
+	if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
+		logger.Critical(err)
+		return &heatMap{}, err
+	} else {
+		hm.MinTS = tsInt
+	}
+	// Max timestamp
+	if err := _collection.Find(bson.M{"m": metric}).Sort("-ts").One(&doc); err != nil {
+		logger.Critical(err)
+		return &heatMap{}, err
+	}
+	if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
+		logger.Critical(err)
+		return &heatMap{}, err
+	} else {
+		hm.MaxTS = tsInt
+	}
+	// Max value
+	if err := _collection.Find(bson.M{"m": metric}).Sort("-v").One(&doc); err != nil {
+		logger.Critical(err)
+		return &heatMap{}, err
+	}
+	hm.MaxValue = doc["v"].(float64)
+
+	iter := _collection.Find(bson.M{"m": metric}).Sort("ts").Iter()
+	for iter.Next(&doc) {
+		if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
+			logger.Critical(err)
+			return &heatMap{}, err
+		} else {
+			x := math.Floor(width * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
+			y := math.Floor(height * doc["v"].(float64) / hm.MaxValue)
+			if x == width {
+				x--
+			}
+			if y == height {
+				y--
+			}
+			hm.Map[int(y)][int(x)]++
+		}
+	}
+	if err := iter.Close(); err != nil {
+		logger.Critical("ZZ", err)
+		return &heatMap{}, err
+	}
+
+	return hm, nil
 }

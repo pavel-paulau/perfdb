@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -226,5 +227,29 @@ func TestSummaryError(t *testing.T) {
 
 	assert.Equal(t, 500, rw.Code)
 	assert.Equal(t, "Internal Server Error", rw.Body.String())
+	storageMock.Mock.AssertExpectations(t)
+}
+
+func TestHeatMap(t *testing.T) {
+	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
+	storageMock.Mock.On("getHeatMap", "snapshot", "source", "cpu").Return(
+		newHeatMap(), nil)
+	storage = storageMock
+
+	req, _ := http.NewRequest("GET", "/snapshot/source/cpu/heatmap", nil)
+	rw := httptest.NewRecorder()
+	newRouter().ServeHTTP(rw, req)
+
+	var hm map[string]interface{}
+	decoder := json.NewDecoder(rw.Body)
+	err := decoder.Decode(&hm)
+	assert.Nil(t, err, err)
+
+	assert.Equal(t, 200, rw.Code)
+	assert.Equal(t, hm["minTimestamp"], 0)
+	assert.Equal(t, hm["maxTimestamp"], 0)
+	assert.Equal(t, hm["maxValue"], 0)
+	assert.Equal(t, hm["map"].([]interface{})[height-1].([]interface{})[width-1], 0)
 	storageMock.Mock.AssertExpectations(t)
 }
