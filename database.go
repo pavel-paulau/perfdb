@@ -26,10 +26,10 @@ type mongoHandler struct {
 	Session *mgo.Session
 }
 
-func newMongoHandler(addrs []string) (*mongoHandler, error) {
+func newMongoHandler(addrs []string, timeout time.Duration) (*mongoHandler, error) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   addrs,
-		Timeout: 30 * time.Second,
+		Timeout: timeout,
 	}
 
 	logger.Info("Connecting to database...")

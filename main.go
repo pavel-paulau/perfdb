@@ -7,17 +7,19 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"bitbucket.org/tebeka/nrsc"
 	"github.com/alexcesaro/log"
 	"github.com/alexcesaro/log/golog"
 )
 
-var logger *golog.Logger
-
-var db, address *string
-
-var storage storageHandler
+var (
+	logger      *golog.Logger
+	db, address *string
+	timeout     *time.Duration
+	storage     storageHandler
+)
 
 func requestLog(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -31,6 +33,7 @@ func init() {
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
 	db = flag.String("db", "127.0.0.1:27017", "comma separated database host[:port] addresses")
+	timeout = flag.Duration("timeout", 30*time.Second, "request timeout")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
@@ -39,7 +42,7 @@ func init() {
 func main() {
 	// Database handler
 	var err error
-	if storage, err = newMongoHandler(strings.Split(*db, ",")); err != nil {
+	if storage, err = newMongoHandler(strings.Split(*db, ","), *timeout); err != nil {
 		os.Exit(1)
 	}
 
