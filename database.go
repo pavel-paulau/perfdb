@@ -279,6 +279,10 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 	}
 	hm.MaxValue = doc["v"].(float64)
 
+	if hm.MaxTS == hm.MinTS || hm.MaxValue == 0 {
+		return hm, nil
+	}
+
 	iter := _collection.Find(bson.M{"m": metric}).Sort("ts").Iter()
 	for iter.Next(&doc) {
 		if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
