@@ -55,7 +55,7 @@ func TestListCollectionsError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "Internal Server Error", rw.Body.String())
+	assert.Equal(t, "{\"error\":\"fake test error\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -68,8 +68,8 @@ func TestListCollectionsWrongSnapshot(t *testing.T) {
 	rw := httptest.NewRecorder()
 	newRouter().ServeHTTP(rw, req)
 
-	assert.Equal(t, 400, rw.Code)
-	assert.Equal(t, "not existing snapshot", rw.Body.String())
+	assert.Equal(t, 404, rw.Code)
+	assert.Equal(t, "{\"error\":\"not found\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -99,7 +99,7 @@ func TestListMetricsError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "Internal Server Error", rw.Body.String())
+	assert.Equal(t, "{\"error\":\"fake test error\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -112,8 +112,8 @@ func TestListMetricsWrongSnapshot(t *testing.T) {
 	rw := httptest.NewRecorder()
 	newRouter().ServeHTTP(rw, req)
 
-	assert.Equal(t, 400, rw.Code)
-	assert.Equal(t, "not existing snapshot", rw.Body.String())
+	assert.Equal(t, 404, rw.Code)
+	assert.Equal(t, "{\"error\":\"not found\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -145,7 +145,7 @@ func TestFinaValuesError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "Internal Server Error", rw.Body.String())
+	assert.Equal(t, "{\"error\":\"fake test error\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 
@@ -195,7 +195,7 @@ func TestInsertBadSample(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 400, rw.Code)
-	assert.Equal(t, "Cannot decode sample: EOF\n", rw.Body.String())
+	assert.Equal(t, "{\"error\":\"EOF\"}", rw.Body.String())
 }
 
 func TestSummary(t *testing.T) {
@@ -226,7 +226,7 @@ func TestSummaryError(t *testing.T) {
 	newRouter().ServeHTTP(rw, req)
 
 	assert.Equal(t, 500, rw.Code)
-	assert.Equal(t, "Internal Server Error", rw.Body.String())
+	assert.Equal(t, "{\"error\":\"fake test error\"}", rw.Body.String())
 	storageMock.Mock.AssertExpectations(t)
 }
 

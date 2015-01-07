@@ -53,7 +53,6 @@ func (mongo *mongoHandler) listDatabases() ([]string, error) {
 	}
 	allDbs, err := mongo.Session.DatabaseNames()
 	if err != nil {
-		logger.Critical(err)
 		return nil, err
 	}
 
@@ -73,8 +72,7 @@ func (mongo *mongoHandler) listCollections(dbname string) ([]string, error) {
 
 	allCollections, err := _db.CollectionNames()
 	if err != nil {
-		logger.Critical(err)
-		return []string{}, err
+		return nil, err
 	}
 
 	collections := []string{}
@@ -93,8 +91,7 @@ func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, err
 
 	var metrics []string
 	if err := _collection.Find(bson.M{}).Sort("m").Distinct("m", &metrics); err != nil {
-		logger.Critical(err)
-		return []string{}, err
+		return nil, err
 	}
 	return metrics, nil
 }
@@ -106,8 +103,7 @@ func (mongo *mongoHandler) findValues(dbname, collection, metric string) (map[st
 
 	var docs []map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").All(&docs); err != nil {
-		logger.Critical(err)
-		return map[string]float64{}, err
+		return nil, err
 	}
 	values := map[string]float64{}
 	for _, doc := range docs {
@@ -122,14 +118,12 @@ func (mongo *mongoHandler) insertSample(dbname, collection string, sample map[st
 	_collection := session.DB(dbPrefix + dbname).C(collection)
 
 	if err := _collection.Insert(sample); err != nil {
-		logger.Critical(err)
 		return err
 	}
 	logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
 
 	for _, key := range []string{"m", "ts", "v"} {
 		if err := _collection.EnsureIndexKey(key); err != nil {
-			logger.Critical(err)
 			return err
 		}
 	}
@@ -178,11 +172,10 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 	)
 	summaries := []map[string]interface{}{}
 	if err := pipe.All(&summaries); err != nil {
-		logger.Critical(err)
-		return map[string]interface{}{}, err
+		return nil, err
 	}
 	if len(summaries) == 0 {
-		return map[string]interface{}{}, nil
+		return nil, nil
 	}
 	summary := summaries[0]
 	delete(summary, "_id")
@@ -192,8 +185,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		// Don't perform in-memory aggregation if limit exceeded
 		var docs []map[string]interface{}
 		if err := _collection.Find(bson.M{"m": metric}).Select(bson.M{"v": 1}).All(&docs); err != nil {
-			logger.Critical(err)
-			return map[string]interface{}{}, err
+			return nil, err
 		}
 		values := []float64{}
 		for _, doc := range docs {
@@ -209,8 +201,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
 			skip := int(float64(count)*percentile) - 1
 			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&result); err != nil {
-				logger.Critical(err)
-				return map[string]interface{}{}, err
+				return nil, err
 			}
 			p := fmt.Sprintf("p%v", percentile*100)
 			summary[p] = result[0]["v"].(float64)
@@ -254,30 +245,25 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 
 	// Min timestamp
 	if err := _collection.Find(bson.M{"m": metric}).Sort("ts").One(&doc); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	}
 	if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	} else {
 		hm.MinTS = tsInt
 	}
 	// Max timestamp
 	if err := _collection.Find(bson.M{"m": metric}).Sort("-ts").One(&doc); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	}
 	if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	} else {
 		hm.MaxTS = tsInt
 	}
 	// Max value
 	if err := _collection.Find(bson.M{"m": metric}).Sort("-v").One(&doc); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	}
 	hm.MaxValue = doc["v"].(float64)
 
@@ -288,8 +274,7 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 	iter := _collection.Find(bson.M{"m": metric}).Sort("ts").Iter()
 	for iter.Next(&doc) {
 		if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
-			logger.Critical(err)
-			return &heatMap{}, err
+			return nil, err
 		} else {
 			x := math.Floor(width * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
 			y := math.Floor(height * doc["v"].(float64) / hm.MaxValue)
@@ -303,8 +288,7 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 		}
 	}
 	if err := iter.Close(); err != nil {
-		logger.Critical(err)
-		return &heatMap{}, err
+		return nil, err
 	}
 
 	return hm, nil
@@ -319,30 +303,25 @@ func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[
 
 	var skip int
 	if count, err := _collection.Find(bson.M{"m": metric}).Count(); err != nil {
-		logger.Critical(err)
-		return map[string]float64{}, err
+		return nil, err
 	} else {
 		skip = int(float64(count)*0.99) - 1
 	}
 	if skip == -1 {
-		logger.Critical("not enough data points")
-		return map[string]float64{}, errors.New("not enough data points")
+		return nil, errors.New("not enough data points")
 	}
 
 	var doc map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&doc); err != nil {
-		logger.Critical(err)
-		return map[string]float64{}, err
+		return nil, err
 	}
 	p99 := doc["v"].(float64)
 	if err := _collection.Find(bson.M{"m": metric}).Sort("v").One(&doc); err != nil {
-		logger.Critical(err)
-		return map[string]float64{}, err
+		return nil, err
 	}
 	minValue := doc["v"].(float64)
 	if p99 == minValue {
-		logger.Critical("dataset lacks variation")
-		return map[string]float64{}, errors.New("dataset lacks variation")
+		return nil, errors.New("dataset lacks variation")
 	}
 
 	delta := (p99 - minValue) / numBins
@@ -352,8 +331,7 @@ func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[
 		rr := lr + delta
 		rname := fmt.Sprintf("%f - %f", lr, rr)
 		if count, err := _collection.Find(bson.M{"m": metric, "v": bson.M{"$gte": lr, "$lt": rr}}).Count(); err != nil {
-			logger.Critical(err)
-			return map[string]float64{}, err
+			return nil, err
 		} else {
 			histogram[rname] = 100.0 * float64(count) / float64(skip)
 		}

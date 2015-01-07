@@ -45,9 +45,19 @@ func newRouter() *mux.Router {
 	return r
 }
 
-func internalError(rw http.ResponseWriter) {
-	rw.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(rw, "Internal Server Error")
+func propagateError(rw http.ResponseWriter, err error, code int) {
+	logger.Critical(err)
+	rw.Header().Set("Content-Type", "application/json")
+	switch code {
+	case 400:
+		rw.WriteHeader(http.StatusBadRequest)
+	case 404:
+		rw.WriteHeader(http.StatusNotFound)
+	case 500:
+		rw.WriteHeader(http.StatusInternalServerError)
+	}
+	resp := map[string]string{"error": err.Error()}
+	fmt.Fprint(rw, httpResponse{resp})
 }
 
 func validJSON(rw http.ResponseWriter, data interface{}) {
@@ -63,7 +73,7 @@ func validHTML(rw http.ResponseWriter, content string) {
 func listDatabases(rw http.ResponseWriter, r *http.Request) {
 	databases, err := storage.listDatabases()
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, databases)
@@ -80,9 +90,7 @@ func stringInSlice(a string, array []string) bool {
 
 func checkDbExists(rw http.ResponseWriter, dbname string) error {
 	if allDbs, err := storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(rw, "not existing snapshot")
-		return errors.New("not existing snapshot")
+		return errors.New("not found")
 	}
 	return nil
 }
@@ -92,11 +100,12 @@ func listSources(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 	sources, err := storage.listCollections(dbname)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, sources)
@@ -108,12 +117,13 @@ func listMetrics(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 
 	metrics, err := storage.listMetrics(dbname, source)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, metrics)
@@ -126,12 +136,13 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := storage.findValues(dbname, source, metric)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, values)
@@ -144,12 +155,13 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := storage.aggregate(dbname, source, metric)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, values)
@@ -158,19 +170,15 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 func readHTML(path string) (string, error) {
 	var html nrsc.Resource
 	if html = nrsc.Get(path); html == nil {
-		err := errors.New("cannot read HTML")
-		logger.Critical(err)
-		return "", err
+		return "", errors.New("cannot read HTML")
 	}
 	var htmlReader io.Reader
 	var err error
 	if htmlReader, err = html.Open(); err != nil {
-		logger.Critical(err)
 		return "", err
 	}
 	var content []byte
 	if content, err = ioutil.ReadAll(htmlReader); err != nil {
-		logger.Critical(err)
 		return "", err
 	}
 	return string(content), nil
@@ -179,7 +187,7 @@ func readHTML(path string) (string, error) {
 func getLineChart(rw http.ResponseWriter, r *http.Request) {
 	content, err := readHTML("linechart.html")
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validHTML(rw, content)
@@ -202,8 +210,7 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&samples)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(rw, "Cannot decode sample: %s\n", err)
+		propagateError(rw, err, 400)
 		return
 	}
 
@@ -224,12 +231,13 @@ func getHeatMap(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := storage.getHeatMap(dbname, source, metric)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, values)
@@ -242,12 +250,13 @@ func getHistogram(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := checkDbExists(rw, dbname); err != nil {
+		propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := storage.getHistogram(dbname, source, metric)
 	if err != nil {
-		internalError(rw)
+		propagateError(rw, err, 500)
 		return
 	}
 	validJSON(rw, values)
