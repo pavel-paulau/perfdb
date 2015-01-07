@@ -301,7 +301,7 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 		}
 	}
 	if err := iter.Close(); err != nil {
-		logger.Critical("ZZ", err)
+		logger.Critical(err)
 		return &heatMap{}, err
 	}
 
