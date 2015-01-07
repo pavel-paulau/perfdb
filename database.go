@@ -138,9 +138,8 @@ func calcPercentile(data []float64, p float64) float64 {
 	c := math.Ceil(k)
 	if f == c {
 		return data[int(k)]
-	} else {
-		return data[int(f)]*(c-k) + data[int(c)]*(k-f)
 	}
+	return data[int(f)]*(c-k) + data[int(c)]*(k-f)
 }
 
 const queryLimit = 10000
@@ -273,19 +272,19 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 
 	iter := _collection.Find(bson.M{"m": metric}).Sort("ts").Iter()
 	for iter.Next(&doc) {
-		if tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64); err != nil {
+		tsInt, err := strconv.ParseInt(doc["ts"].(string), 10, 64)
+		if err != nil {
 			return nil, err
-		} else {
-			x := math.Floor(width * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
-			y := math.Floor(height * doc["v"].(float64) / hm.MaxValue)
-			if x == width {
-				x--
-			}
-			if y == height {
-				y--
-			}
-			hm.Map[int(y)][int(x)]++
 		}
+		x := math.Floor(width * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
+		y := math.Floor(height * doc["v"].(float64) / hm.MaxValue)
+		if x == width {
+			x--
+		}
+		if y == height {
+			y--
+		}
+		hm.Map[int(y)][int(x)]++
 	}
 	if err := iter.Close(); err != nil {
 		return nil, err
@@ -301,15 +300,14 @@ func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
 
-	var skip int
-	if count, err := _collection.Find(bson.M{"m": metric}).Count(); err != nil {
+	count, err := _collection.Find(bson.M{"m": metric}).Count()
+	if err != nil {
 		return nil, err
-	} else {
-		skip = int(float64(count)*0.99) - 1
 	}
-	if skip == -1 {
+	if count <= 1 {
 		return nil, errors.New("not enough data points")
 	}
+	skip := int(float64(count)*0.99) - 1
 
 	var doc map[string]interface{}
 	if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&doc); err != nil {
@@ -330,11 +328,11 @@ func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[
 		lr := minValue + float64(i)*delta
 		rr := lr + delta
 		rname := fmt.Sprintf("%f - %f", lr, rr)
-		if count, err := _collection.Find(bson.M{"m": metric, "v": bson.M{"$gte": lr, "$lt": rr}}).Count(); err != nil {
+		count, err := _collection.Find(bson.M{"m": metric, "v": bson.M{"$gte": lr, "$lt": rr}}).Count()
+		if err != nil {
 			return nil, err
-		} else {
-			histogram[rname] = 100.0 * float64(count) / float64(skip)
 		}
+		histogram[rname] = 100.0 * float64(count) / float64(skip)
 	}
 
 	return histogram, nil
