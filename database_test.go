@@ -42,3 +42,8 @@ func (m *mongoMock) getHeatMap(dbname, collection, metric string) (*heatMap, err
 	args := m.Mock.Called(dbname, collection, metric)
 	return args.Get(0).(*heatMap), args.Error(1)
 }
+
+func (m *mongoMock) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
+	args := m.Mock.Called(dbname, collection, metric)
+	return args.Get(0).(map[string]float64), args.Error(1)
+}

@@ -253,3 +253,19 @@ func TestHeatMap(t *testing.T) {
 	assert.Equal(t, hm["map"].([]interface{})[height-1].([]interface{})[width-1], 0)
 	storageMock.Mock.AssertExpectations(t)
 }
+
+func TestHisto(t *testing.T) {
+	storageMock := new(mongoMock)
+	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
+	storageMock.Mock.On("getHistogram",
+		"snapshot", "source", "cpu").Return(map[string]float64{"0.0 - 1.0": 100.0}, nil)
+	storage = storageMock
+
+	req, _ := http.NewRequest("GET", "/snapshot/source/cpu/histo", nil)
+	rw := httptest.NewRecorder()
+	newRouter().ServeHTTP(rw, req)
+
+	assert.Equal(t, 200, rw.Code)
+	assert.Equal(t, "{\"0.0 - 1.0\":100}", rw.Body.String())
+	storageMock.Mock.AssertExpectations(t)
+}

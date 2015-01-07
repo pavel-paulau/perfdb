@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -20,6 +21,7 @@ type storageHandler interface {
 	findValues(dbname, collection, metric string) (map[string]float64, error)
 	aggregate(dbname, collection, metric string) (map[string]interface{}, error)
 	getHeatMap(dbname, collection, metric string) (*heatMap, error)
+	getHistogram(dbname, collection, metric string) (map[string]float64, error)
 }
 
 type mongoHandler struct {
@@ -206,7 +208,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		var result []map[string]interface{}
 		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
 			skip := int(float64(count)*percentile) - 1
-			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).Limit(1).All(&result); err != nil {
+			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&result); err != nil {
 				logger.Critical(err)
 				return map[string]interface{}{}, err
 			}
@@ -306,4 +308,56 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 	}
 
 	return hm, nil
+}
+
+const numBins = 6
+
+func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
+	session := mongo.Session.New()
+	defer session.Close()
+	_collection := session.DB(dbPrefix + dbname).C(collection)
+
+	var skip int
+	if count, err := _collection.Find(bson.M{"m": metric}).Count(); err != nil {
+		logger.Critical(err)
+		return map[string]float64{}, err
+	} else {
+		skip = int(float64(count)*0.99) - 1
+	}
+	if skip == -1 {
+		logger.Critical("not enough data points")
+		return map[string]float64{}, errors.New("not enough data points")
+	}
+
+	var doc map[string]interface{}
+	if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&doc); err != nil {
+		logger.Critical(err)
+		return map[string]float64{}, err
+	}
+	p99 := doc["v"].(float64)
+	if err := _collection.Find(bson.M{"m": metric}).Sort("v").One(&doc); err != nil {
+		logger.Critical(err)
+		return map[string]float64{}, err
+	}
+	minValue := doc["v"].(float64)
+	if p99 == minValue {
+		logger.Critical("dataset lacks variation")
+		return map[string]float64{}, errors.New("dataset lacks variation")
+	}
+
+	delta := (p99 - minValue) / numBins
+	histogram := map[string]float64{}
+	for i := 0; i < numBins; i++ {
+		lr := minValue + float64(i)*delta
+		rr := lr + delta
+		rname := fmt.Sprintf("%f - %f", lr, rr)
+		if count, err := _collection.Find(bson.M{"m": metric, "v": bson.M{"$gte": lr, "$lt": rr}}).Count(); err != nil {
+			logger.Critical(err)
+			return map[string]float64{}, err
+		} else {
+			histogram[rname] = 100.0 * float64(count) / float64(skip)
+		}
+	}
+
+	return histogram, nil
 }
