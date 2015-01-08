@@ -174,7 +174,7 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		return nil, err
 	}
 	if len(summaries) == 0 {
-		return nil, nil
+		return map[string]interface{}{}, nil
 	}
 	summary := summaries[0]
 	delete(summary, "_id")
@@ -199,8 +199,8 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		var result []map[string]interface{}
 		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
 			skip := int(float64(count)*percentile) - 1
-			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).One(&result); err != nil {
-				return nil, err
+			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).Limit(1).All(&result); err != nil {
+				return map[string]interface{}{}, err
 			}
 			p := fmt.Sprintf("p%v", percentile*100)
 			summary[p] = result[0]["v"].(float64)
