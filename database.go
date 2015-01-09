@@ -158,13 +158,20 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 			},
 			{
 				"$group": bson.M{
-					"_id": bson.M{
-						"metric": "$m",
-					},
+					"_id":   nil,
 					"avg":   bson.M{"$avg": "$v"},
 					"min":   bson.M{"$min": "$v"},
 					"max":   bson.M{"$max": "$v"},
 					"count": bson.M{"$sum": 1},
+				},
+			},
+			{
+				"$project": bson.M{
+					"_id":   0,
+					"avg":   1,
+					"min":   1,
+					"max":   1,
+					"count": 1,
 				},
 			},
 		},
@@ -177,7 +184,6 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 		return map[string]interface{}{}, nil
 	}
 	summary := summaries[0]
-	delete(summary, "_id")
 
 	count := summary["count"].(int)
 	if count < queryLimit {
