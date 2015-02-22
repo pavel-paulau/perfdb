@@ -52,7 +52,7 @@ func TestListDatabasesPerfDb(t *testing.T) {
 	assert.Equal(t, []string{}, databases)
 }
 
-func TestAddSampleMongoPerfDb(t *testing.T) {
+func TestAddSamplePerfDb(t *testing.T) {
 	var err error
 	var storage *perfDb
 	if storage, err = newTmpStorage(); err != nil {
@@ -60,13 +60,13 @@ func TestAddSampleMongoPerfDb(t *testing.T) {
 	}
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
-	err = storage.addSample("testdb", "testcoll", sample)
-	assert.Nil(t, err)
-
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
 	sample = map[string]interface{}{"ts": "1411940889515410775", "m": "cpu", "v": 75.11}
-	err = storage.addSample("testdb", "testcoll", sample)
-	assert.Nil(t, err)
-
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestListSourcesPerfDb(t *testing.T) {
@@ -78,10 +78,14 @@ func TestListSourcesPerfDb(t *testing.T) {
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
 	err = storage.addSample("testdb", "testcoll", sample)
-	assert.Nil(t, err)
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
 
-	collections, err := storage.listSources("testdb")
-	assert.Nil(t, err)
+	var collections []string
+	if collections, err = storage.listSources("testdb"); err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, []string{"testcoll"}, collections)
 }
 
@@ -93,10 +97,13 @@ func TestListMetricsPerfDb(t *testing.T) {
 	}
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
-	err = storage.addSample("testdb", "testcoll", sample)
-	assert.Nil(t, err)
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
 
-	metrics, err := storage.listMetrics("testdb", "testcoll")
-	assert.Nil(t, err)
+	var metrics []string
+	if metrics, err = storage.listMetrics("testdb", "testcoll"); err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, []string{"cpu"}, metrics)
 }
