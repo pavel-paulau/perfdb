@@ -63,10 +63,6 @@ func TestAddSamplePerfDb(t *testing.T) {
 	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
 		t.Fatal(err)
 	}
-	sample = map[string]interface{}{"ts": "1411940889515410775", "m": "cpu", "v": 75.11}
-	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestListSourcesPerfDb(t *testing.T) {
@@ -106,4 +102,27 @@ func TestListMetricsPerfDb(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []string{"cpu"}, metrics)
+}
+
+func TestGetRawValuePerfDb(t *testing.T) {
+	var err error
+	var storage *perfDb
+	if storage, err = newTmpStorage(); err != nil {
+		t.Fatal(err)
+	}
+
+	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": float64(1005)}
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
+	sample = map[string]interface{}{"ts": "1411940889515410775", "m": "cpu", "v": 75.11}
+	if err = storage.addSample("testdb", "testcoll", sample); err != nil {
+		t.Fatal(err)
+	}
+
+	var values map[string]float64
+	if values, err = storage.getRawValues("testdb", "testcoll", "cpu"); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, map[string]float64{"1411940889515410774": 1005, "1411940889515410775": 75.11}, values)
 }

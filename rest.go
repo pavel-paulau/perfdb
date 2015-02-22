@@ -218,7 +218,7 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 		sample := map[string]interface{}{
 			"ts": ts,
 			"m":  m,
-			"v":  v,
+			"v":  v.(float64),
 		}
 		go storage.addSample(dbname, source, sample)
 	}

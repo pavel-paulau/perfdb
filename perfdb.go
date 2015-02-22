@@ -1,11 +1,13 @@
 package main
 
 import (
-	"encoding/csv"
+	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type perfDb struct {
@@ -59,7 +61,39 @@ func (pdb *perfDb) listMetrics(dbname, collection string) ([]string, error) {
 }
 
 func (pdb *perfDb) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
-	return map[string]float64{}, nil
+	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
+	if err := os.MkdirAll(dstDir, 0775); err != nil {
+		return nil, err
+	}
+
+	dstFile := filepath.Join(dstDir, metric)
+
+	file, err := os.Open(dstFile)
+	if err != nil {
+		logger.Critical(err)
+		return nil, err
+	}
+	defer file.Close()
+
+	values := map[string]float64{}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		sample := strings.Fields(scanner.Text())
+		var value float64
+		if value, err = strconv.ParseFloat(sample[1], 64); err != nil {
+			logger.Critical(err)
+			return nil, err
+		}
+		values[sample[0]] = value
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Critical(err)
+		return nil, err
+	}
+
+	return values, nil
 }
 
 func (pdb *perfDb) addSample(dbname, collection string, sample map[string]interface{}) error {
@@ -77,15 +111,11 @@ func (pdb *perfDb) addSample(dbname, collection string, sample map[string]interf
 	}
 	defer file.Close()
 
-	writer := csv.NewWriter(file)
-	value := strconv.FormatFloat(sample["v"].(float64), 'f', 12, 64)
-	if err := writer.Write([]string{sample["ts"].(string), value}); err != nil {
+	if _, err := fmt.Fprintf(file, "%s %025.12f\n", sample["ts"], sample["v"]); err != nil {
 		logger.Critical(err)
 		return err
 	}
-	writer.Flush()
-
-	return writer.Error()
+	return nil
 }
 
 func (pdb *perfDb) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
