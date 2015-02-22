@@ -13,11 +13,11 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-type mongoHandler struct {
+type mongoDB struct {
 	Session *mgo.Session
 }
 
-func newMongoHandler(addrs []string, timeout time.Duration) (*mongoHandler, error) {
+func newMongoDB(addrs []string, timeout time.Duration) (*mongoDB, error) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:   addrs,
 		Timeout: timeout,
@@ -30,13 +30,13 @@ func newMongoHandler(addrs []string, timeout time.Duration) (*mongoHandler, erro
 	} else {
 		logger.Info("Connection established.")
 		session.SetMode(mgo.Monotonic, true)
-		return &mongoHandler{session}, nil
+		return &mongoDB{session}, nil
 	}
 }
 
 var dbPrefix = "perf"
 
-func (mongo *mongoHandler) listDatabases() ([]string, error) {
+func (mongo *mongoDB) listDatabases() ([]string, error) {
 	if err := mongo.Session.Ping(); err != nil {
 		mongo.Session.Refresh()
 	}
@@ -54,7 +54,7 @@ func (mongo *mongoHandler) listDatabases() ([]string, error) {
 	return dbs, nil
 }
 
-func (mongo *mongoHandler) listSources(dbname string) ([]string, error) {
+func (mongo *mongoDB) listSources(dbname string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_db := session.DB(dbPrefix + dbname)
@@ -73,7 +73,7 @@ func (mongo *mongoHandler) listSources(dbname string) ([]string, error) {
 	return collections, err
 }
 
-func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, error) {
+func (mongo *mongoDB) listMetrics(dbname, collection string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -85,7 +85,7 @@ func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, err
 	return metrics, nil
 }
 
-func (mongo *mongoHandler) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
+func (mongo *mongoDB) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -101,7 +101,7 @@ func (mongo *mongoHandler) getRawValues(dbname, collection, metric string) (map[
 	return values, nil
 }
 
-func (mongo *mongoHandler) addSample(dbname, collection string, sample map[string]interface{}) error {
+func (mongo *mongoDB) addSample(dbname, collection string, sample map[string]interface{}) error {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -133,7 +133,7 @@ func calcPercentile(data []float64, p float64) float64 {
 
 const queryLimit = 10000
 
-func (mongo *mongoHandler) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
+func (mongo *mongoDB) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -205,7 +205,7 @@ func (mongo *mongoHandler) getSummary(dbname, collection, metric string) (map[st
 	return summary, nil
 }
 
-func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
+func (mongo *mongoDB) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -266,7 +266,7 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 
 const numBins = 6
 
-func (mongo *mongoHandler) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
+func (mongo *mongoDB) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)

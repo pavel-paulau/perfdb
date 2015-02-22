@@ -10,19 +10,19 @@ import (
 	"strings"
 )
 
-type perfDb struct {
+type perfDB struct {
 	BaseDir string
 }
 
-func newPerfDb(BaseDir string) (*perfDb, error) {
+func newPerfDB(BaseDir string) (*perfDB, error) {
 	if err := os.MkdirAll(BaseDir, 0755); err != nil {
 		logger.Critical("Failed to initalize datastore: %s", err)
 		return nil, err
 	}
-	return &perfDb{BaseDir}, nil
+	return &perfDB{BaseDir}, nil
 }
 
-func (pdb *perfDb) listDatabases() ([]string, error) {
+func (pdb *perfDB) listDatabases() ([]string, error) {
 	files, err := ioutil.ReadDir(pdb.BaseDir)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (pdb *perfDb) listDatabases() ([]string, error) {
 	return databases, nil
 }
 
-func (pdb *perfDb) listSources(dbname string) ([]string, error) {
+func (pdb *perfDB) listSources(dbname string) ([]string, error) {
 	dstDir := filepath.Join(pdb.BaseDir, dbname)
 	files, err := ioutil.ReadDir(dstDir)
 	if err != nil {
@@ -47,7 +47,7 @@ func (pdb *perfDb) listSources(dbname string) ([]string, error) {
 	return collections, nil
 }
 
-func (pdb *perfDb) listMetrics(dbname, collection string) ([]string, error) {
+func (pdb *perfDB) listMetrics(dbname, collection string) ([]string, error) {
 	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	files, err := ioutil.ReadDir(dstDir)
 	if err != nil {
@@ -60,7 +60,7 @@ func (pdb *perfDb) listMetrics(dbname, collection string) ([]string, error) {
 	return metrics, nil
 }
 
-func (pdb *perfDb) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
+func (pdb *perfDB) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
 	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	if err := os.MkdirAll(dstDir, 0775); err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (pdb *perfDb) getRawValues(dbname, collection, metric string) (map[string]f
 	return values, nil
 }
 
-func (pdb *perfDb) addSample(dbname, collection string, sample map[string]interface{}) error {
+func (pdb *perfDB) addSample(dbname, collection string, sample map[string]interface{}) error {
 	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	if err := os.MkdirAll(dstDir, 0775); err != nil {
 		return err
@@ -118,13 +118,13 @@ func (pdb *perfDb) addSample(dbname, collection string, sample map[string]interf
 	return nil
 }
 
-func (pdb *perfDb) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
+func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
-func (pdb *perfDb) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
+func (pdb *perfDB) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
 	return newHeatMap(), nil
 }
 
-func (pdb *perfDb) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
+func (pdb *perfDB) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
 	return map[string]float64{}, nil
 }

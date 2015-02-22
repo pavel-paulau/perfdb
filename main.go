@@ -53,7 +53,7 @@ func init() {
 func main() {
 	// Database handler
 	var err error
-	if storage, err = newMongoHandler(strings.Split(*db, ","), *timeout); err != nil {
+	if storage, err = newMongoDB(strings.Split(*db, ","), *timeout); err != nil {
 		os.Exit(1)
 	}
 
