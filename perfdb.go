@@ -1,15 +1,34 @@
 package main
 
+import (
+	"io/ioutil"
+	"os"
+)
+
 type perfDb struct {
 	Basedir string
 }
 
 func newPerfDb(basedir string) (*perfDb, error) {
+	if _, err := os.Stat(basedir); err != nil {
+		if os.IsNotExist(err) {
+			logger.Infof("Creating a new datastore '%s' ...", basedir)
+			os.Mkdir(basedir, 755)
+		}
+	}
 	return &perfDb{basedir}, nil
 }
 
 func (pdb *perfDb) listDatabases() ([]string, error) {
-	return []string{}, nil
+	files, err := ioutil.ReadDir(pdb.Basedir)
+	if err != nil {
+		return nil, err
+	}
+	databases := []string{}
+	for _, f := range files {
+		databases = append(databases, f.Name())
+	}
+	return databases, nil
 }
 
 func (pdb *perfDb) listCollections(dbname string) ([]string, error) {
