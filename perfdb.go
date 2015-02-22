@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/csv"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strconv"
 )
 
 type perfDb struct {
@@ -10,11 +13,9 @@ type perfDb struct {
 }
 
 func newPerfDb(basedir string) (*perfDb, error) {
-	if _, err := os.Stat(basedir); err != nil {
-		if os.IsNotExist(err) {
-			logger.Infof("Creating a new datastore '%s' ...", basedir)
-			os.Mkdir(basedir, 755)
-		}
+	if err := os.MkdirAll(basedir, 0755); err != nil {
+		logger.Critical("Failed to initalize datastore: %s", err)
+		return nil, err
 	}
 	return &perfDb{basedir}, nil
 }
@@ -44,7 +45,29 @@ func (pdb *perfDb) findValues(dbname, collection, metric string) (map[string]flo
 }
 
 func (pdb *perfDb) insertSample(dbname, collection string, sample map[string]interface{}) error {
-	return nil
+	dstDir := filepath.Join(pdb.Basedir, dbname, collection)
+	if err := os.MkdirAll(dstDir, 0775); err != nil {
+		return err
+	}
+
+	dstFile := filepath.Join(dstDir, sample["m"].(string))
+
+	file, err := os.OpenFile(dstFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		logger.Critical(err)
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	value := strconv.FormatFloat(sample["v"].(float64), 'f', 12, 64)
+	if err := writer.Write([]string{sample["ts"].(string), value}); err != nil {
+		logger.Critical(err)
+		return err
+	}
+	writer.Flush()
+
+	return writer.Error()
 }
 
 func (pdb *perfDb) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
