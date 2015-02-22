@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListDatabases(t *testing.T) {
+func TestListDatabasesMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storage = storageMock
@@ -27,7 +27,7 @@ func TestListDatabases(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListCollections(t *testing.T) {
+func TestListCollectionsMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listCollections", "snapshot").Return([]string{"source"}, nil)
@@ -44,7 +44,7 @@ func TestListCollections(t *testing.T) {
 
 var ErrTest = errors.New("fake test error")
 
-func TestListCollectionsError(t *testing.T) {
+func TestListCollectionsErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listCollections", "snapshot").Return([]string{}, ErrTest)
@@ -59,7 +59,7 @@ func TestListCollectionsError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListCollectionsWrongSnapshot(t *testing.T) {
+func TestListCollectionsWrongSnapshotMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storage = storageMock
@@ -73,7 +73,7 @@ func TestListCollectionsWrongSnapshot(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListMetrics(t *testing.T) {
+func TestListMetricsMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{"cpu_user", "cpu_sys"}, nil)
@@ -88,7 +88,7 @@ func TestListMetrics(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListMetricsError(t *testing.T) {
+func TestListMetricsErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("listMetrics", "snapshot", "source").Return([]string{}, ErrTest)
@@ -103,7 +103,7 @@ func TestListMetricsError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListMetricsWrongSnapshot(t *testing.T) {
+func TestListMetricsWrongSnapshotMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storage = storageMock
@@ -117,7 +117,7 @@ func TestListMetricsWrongSnapshot(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestFindValues(t *testing.T) {
+func TestFindValuesMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("findValues",
@@ -133,7 +133,7 @@ func TestFindValues(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestFinaValuesError(t *testing.T) {
+func TestFinaValuesErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("findValues",
@@ -149,7 +149,7 @@ func TestFinaValuesError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertSample(t *testing.T) {
+func TestInsertSampleMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("insertSample",
 		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
@@ -167,7 +167,7 @@ func TestInsertSample(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertSampleError(t *testing.T) {
+func TestInsertSampleErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("insertSample",
 		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
@@ -188,7 +188,7 @@ func TestInsertSampleError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertBadSample(t *testing.T) {
+func TestInsertBadSampleMongo(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/snapshot/source",
 		bytes.NewBufferString(""))
 	rw := httptest.NewRecorder()
@@ -198,7 +198,7 @@ func TestInsertBadSample(t *testing.T) {
 	assert.Equal(t, "{\"error\":\"EOF\"}", rw.Body.String())
 }
 
-func TestSummary(t *testing.T) {
+func TestSummaryMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("aggregate",
@@ -214,7 +214,7 @@ func TestSummary(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestSummaryError(t *testing.T) {
+func TestSummaryErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("aggregate", "snapshot", "source", "cpu").Return(
@@ -230,7 +230,7 @@ func TestSummaryError(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestHeatMap(t *testing.T) {
+func TestHeatMapMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("getHeatMap", "snapshot", "source", "cpu").Return(
@@ -254,7 +254,7 @@ func TestHeatMap(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestHisto(t *testing.T) {
+func TestHistogramMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("getHistogram",
