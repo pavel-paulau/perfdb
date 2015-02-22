@@ -29,6 +29,15 @@ func newTmpStorage() (*perfDb, error) {
 	return storage, nil
 }
 
+func TestInterfacePerfDb(t *testing.T) {
+	var err error
+	var storage interface{}
+	if storage, err = newTmpStorage(); err != nil {
+		t.Fatal(err)
+	}
+	assert.NotEqual(t, nil, storage.(storageHandler))
+}
+
 func TestListDatabasesPerfDb(t *testing.T) {
 	var err error
 	var storage *perfDb
