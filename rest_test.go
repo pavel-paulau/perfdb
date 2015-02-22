@@ -27,10 +27,10 @@ func TestListDatabasesMongo(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListCollectionsMongo(t *testing.T) {
+func TestListSourcesMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("listCollections", "snapshot").Return([]string{"source"}, nil)
+	storageMock.Mock.On("listSources", "snapshot").Return([]string{"source"}, nil)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot", nil)
@@ -44,10 +44,10 @@ func TestListCollectionsMongo(t *testing.T) {
 
 var ErrTest = errors.New("fake test error")
 
-func TestListCollectionsErrorMongo(t *testing.T) {
+func TestListSourcesErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("listCollections", "snapshot").Return([]string{}, ErrTest)
+	storageMock.Mock.On("listSources", "snapshot").Return([]string{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot", nil)
@@ -59,7 +59,7 @@ func TestListCollectionsErrorMongo(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestListCollectionsWrongSnapshotMongo(t *testing.T) {
+func TestListSourcesWrongSnapshotMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storage = storageMock
@@ -120,7 +120,7 @@ func TestListMetricsWrongSnapshotMongo(t *testing.T) {
 func TestFindValuesMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("findValues",
+	storageMock.Mock.On("getRawValues",
 		"snapshot", "source", "cpu").Return(map[string]float64{"1411534805453497432": 100}, nil)
 	storage = storageMock
 
@@ -136,7 +136,7 @@ func TestFindValuesMongo(t *testing.T) {
 func TestFinaValuesErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("findValues",
+	storageMock.Mock.On("getRawValues",
 		"snapshot", "source", "cpu").Return(map[string]float64{}, ErrTest)
 	storage = storageMock
 
@@ -149,9 +149,9 @@ func TestFinaValuesErrorMongo(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertSampleMongo(t *testing.T) {
+func TestAddSampleMongo(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("insertSample",
+	storageMock.Mock.On("addSample",
 		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
 	).Return(nil)
 	storage = storageMock
@@ -167,9 +167,9 @@ func TestInsertSampleMongo(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertSampleErrorMongo(t *testing.T) {
+func TestAddSampleErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("insertSample",
+	storageMock.Mock.On("addSample",
 		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
 	).Return(ErrTest)
 	storage = storageMock
@@ -188,7 +188,7 @@ func TestInsertSampleErrorMongo(t *testing.T) {
 	storageMock.Mock.AssertExpectations(t)
 }
 
-func TestInsertBadSampleMongo(t *testing.T) {
+func TestAddBadSampleMongo(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/snapshot/source",
 		bytes.NewBufferString(""))
 	rw := httptest.NewRecorder()
@@ -201,7 +201,7 @@ func TestInsertBadSampleMongo(t *testing.T) {
 func TestSummaryMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("aggregate",
+	storageMock.Mock.On("getSummary",
 		"snapshot", "source", "cpu").Return(map[string]interface{}{"mean": 100}, nil)
 	storage = storageMock
 
@@ -217,7 +217,7 @@ func TestSummaryMongo(t *testing.T) {
 func TestSummaryErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
-	storageMock.Mock.On("aggregate", "snapshot", "source", "cpu").Return(
+	storageMock.Mock.On("getSummary", "snapshot", "source", "cpu").Return(
 		map[string]interface{}{}, ErrTest)
 	storage = storageMock
 

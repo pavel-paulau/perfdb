@@ -32,7 +32,7 @@ func (pdb *perfDb) listDatabases() ([]string, error) {
 	return databases, nil
 }
 
-func (pdb *perfDb) listCollections(dbname string) ([]string, error) {
+func (pdb *perfDb) listSources(dbname string) ([]string, error) {
 	dstDir := filepath.Join(pdb.BaseDir, dbname)
 	files, err := ioutil.ReadDir(dstDir)
 	if err != nil {
@@ -58,11 +58,11 @@ func (pdb *perfDb) listMetrics(dbname, collection string) ([]string, error) {
 	return metrics, nil
 }
 
-func (pdb *perfDb) findValues(dbname, collection, metric string) (map[string]float64, error) {
+func (pdb *perfDb) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
 	return map[string]float64{}, nil
 }
 
-func (pdb *perfDb) insertSample(dbname, collection string, sample map[string]interface{}) error {
+func (pdb *perfDb) addSample(dbname, collection string, sample map[string]interface{}) error {
 	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	if err := os.MkdirAll(dstDir, 0775); err != nil {
 		return err
@@ -88,7 +88,7 @@ func (pdb *perfDb) insertSample(dbname, collection string, sample map[string]int
 	return writer.Error()
 }
 
-func (pdb *perfDb) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
+func (pdb *perfDb) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
 func (pdb *perfDb) getHeatMap(dbname, collection, metric string) (*heatMap, error) {

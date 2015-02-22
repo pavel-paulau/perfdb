@@ -43,7 +43,7 @@ func TestListDatabasesPerfDb(t *testing.T) {
 	assert.Equal(t, []string{}, databases)
 }
 
-func TestInsertSampleMongoPerfDb(t *testing.T) {
+func TestAddSampleMongoPerfDb(t *testing.T) {
 	var err error
 	var storage *perfDb
 	if storage, err = newTmpStorage(); err != nil {
@@ -51,16 +51,16 @@ func TestInsertSampleMongoPerfDb(t *testing.T) {
 	}
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
-	err = storage.insertSample("testdb", "testcoll", sample)
+	err = storage.addSample("testdb", "testcoll", sample)
 	assert.Nil(t, err)
 
 	sample = map[string]interface{}{"ts": "1411940889515410775", "m": "cpu", "v": 75.11}
-	err = storage.insertSample("testdb", "testcoll", sample)
+	err = storage.addSample("testdb", "testcoll", sample)
 	assert.Nil(t, err)
 
 }
 
-func TestListCollectionsPerfDb(t *testing.T) {
+func TestListSourcesPerfDb(t *testing.T) {
 	var err error
 	var storage *perfDb
 	if storage, err = newTmpStorage(); err != nil {
@@ -68,10 +68,10 @@ func TestListCollectionsPerfDb(t *testing.T) {
 	}
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
-	err = storage.insertSample("testdb", "testcoll", sample)
+	err = storage.addSample("testdb", "testcoll", sample)
 	assert.Nil(t, err)
 
-	collections, err := storage.listCollections("testdb")
+	collections, err := storage.listSources("testdb")
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"testcoll"}, collections)
 }
@@ -84,7 +84,7 @@ func TestListMetricsPerfDb(t *testing.T) {
 	}
 
 	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
-	err = storage.insertSample("testdb", "testcoll", sample)
+	err = storage.addSample("testdb", "testcoll", sample)
 	assert.Nil(t, err)
 
 	metrics, err := storage.listMetrics("testdb", "testcoll")

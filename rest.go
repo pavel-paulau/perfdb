@@ -103,7 +103,7 @@ func listSources(rw http.ResponseWriter, r *http.Request) {
 		propagateError(rw, err, 404)
 		return
 	}
-	sources, err := storage.listCollections(dbname)
+	sources, err := storage.listSources(dbname)
 	if err != nil {
 		propagateError(rw, err, 500)
 		return
@@ -140,7 +140,7 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values, err := storage.findValues(dbname, source, metric)
+	values, err := storage.getRawValues(dbname, source, metric)
 	if err != nil {
 		propagateError(rw, err, 500)
 		return
@@ -159,7 +159,7 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values, err := storage.aggregate(dbname, source, metric)
+	values, err := storage.getSummary(dbname, source, metric)
 	if err != nil {
 		propagateError(rw, err, 500)
 		return
@@ -220,7 +220,7 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 			"m":  m,
 			"v":  v,
 		}
-		go storage.insertSample(dbname, source, sample)
+		go storage.addSample(dbname, source, sample)
 	}
 }
 

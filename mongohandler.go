@@ -54,7 +54,7 @@ func (mongo *mongoHandler) listDatabases() ([]string, error) {
 	return dbs, nil
 }
 
-func (mongo *mongoHandler) listCollections(dbname string) ([]string, error) {
+func (mongo *mongoHandler) listSources(dbname string) ([]string, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_db := session.DB(dbPrefix + dbname)
@@ -85,7 +85,7 @@ func (mongo *mongoHandler) listMetrics(dbname, collection string) ([]string, err
 	return metrics, nil
 }
 
-func (mongo *mongoHandler) findValues(dbname, collection, metric string) (map[string]float64, error) {
+func (mongo *mongoHandler) getRawValues(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -101,7 +101,7 @@ func (mongo *mongoHandler) findValues(dbname, collection, metric string) (map[st
 	return values, nil
 }
 
-func (mongo *mongoHandler) insertSample(dbname, collection string, sample map[string]interface{}) error {
+func (mongo *mongoHandler) addSample(dbname, collection string, sample map[string]interface{}) error {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -133,7 +133,7 @@ func calcPercentile(data []float64, p float64) float64 {
 
 const queryLimit = 10000
 
-func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[string]interface{}, error) {
+func (mongo *mongoHandler) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
