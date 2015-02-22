@@ -9,19 +9,19 @@ import (
 )
 
 type perfDb struct {
-	Basedir string
+	BaseDir string
 }
 
-func newPerfDb(basedir string) (*perfDb, error) {
-	if err := os.MkdirAll(basedir, 0755); err != nil {
+func newPerfDb(BaseDir string) (*perfDb, error) {
+	if err := os.MkdirAll(BaseDir, 0755); err != nil {
 		logger.Critical("Failed to initalize datastore: %s", err)
 		return nil, err
 	}
-	return &perfDb{basedir}, nil
+	return &perfDb{BaseDir}, nil
 }
 
 func (pdb *perfDb) listDatabases() ([]string, error) {
-	files, err := ioutil.ReadDir(pdb.Basedir)
+	files, err := ioutil.ReadDir(pdb.BaseDir)
 	if err != nil {
 		return nil, err
 	}
@@ -33,11 +33,29 @@ func (pdb *perfDb) listDatabases() ([]string, error) {
 }
 
 func (pdb *perfDb) listCollections(dbname string) ([]string, error) {
-	return []string{}, nil
+	dstDir := filepath.Join(pdb.BaseDir, dbname)
+	files, err := ioutil.ReadDir(dstDir)
+	if err != nil {
+		return nil, err
+	}
+	collections := []string{}
+	for _, f := range files {
+		collections = append(collections, f.Name())
+	}
+	return collections, nil
 }
 
 func (pdb *perfDb) listMetrics(dbname, collection string) ([]string, error) {
-	return []string{}, nil
+	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
+	files, err := ioutil.ReadDir(dstDir)
+	if err != nil {
+		return nil, err
+	}
+	metrics := []string{}
+	for _, f := range files {
+		metrics = append(metrics, f.Name())
+	}
+	return metrics, nil
 }
 
 func (pdb *perfDb) findValues(dbname, collection, metric string) (map[string]float64, error) {
@@ -45,7 +63,7 @@ func (pdb *perfDb) findValues(dbname, collection, metric string) (map[string]flo
 }
 
 func (pdb *perfDb) insertSample(dbname, collection string, sample map[string]interface{}) error {
-	dstDir := filepath.Join(pdb.Basedir, dbname, collection)
+	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	if err := os.MkdirAll(dstDir, 0775); err != nil {
 		return err
 	}

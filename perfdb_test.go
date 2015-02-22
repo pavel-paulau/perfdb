@@ -3,21 +3,36 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListPerfDb(t *testing.T) {
+func removeStorage(pdb *perfDb) {
+	os.RemoveAll(pdb.BaseDir)
+}
+
+func newTmpStorage() (*perfDb, error) {
 	var tmpDir string
 	var err error
 
 	if tmpDir, err = ioutil.TempDir("", ""); err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
 
 	var storage *perfDb
 	if storage, err = newPerfDb(tmpDir); err != nil {
+		return nil, err
+	}
+	runtime.SetFinalizer(storage, removeStorage)
+	return storage, nil
+}
+
+func TestListDatabasesPerfDb(t *testing.T) {
+	var err error
+	var storage *perfDb
+	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -26,23 +41,12 @@ func TestListPerfDb(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []string{}, databases)
-
-	if storage, err = newPerfDb(tmpDir); err != nil {
-		t.Fatal(err)
-	}
-	os.RemoveAll(tmpDir)
 }
 
-func TestInsertPerfDb(t *testing.T) {
-	var tmpDir string
+func TestInsertSampleMongoPerfDb(t *testing.T) {
 	var err error
-
-	if tmpDir, err = ioutil.TempDir("", ""); err != nil {
-		t.Fatal(err)
-	}
-
 	var storage *perfDb
-	if storage, err = newPerfDb(tmpDir); err != nil {
+	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -54,5 +58,36 @@ func TestInsertPerfDb(t *testing.T) {
 	err = storage.insertSample("testdb", "testcoll", sample)
 	assert.Nil(t, err)
 
-	os.RemoveAll(tmpDir)
+}
+
+func TestListCollectionsPerfDb(t *testing.T) {
+	var err error
+	var storage *perfDb
+	if storage, err = newTmpStorage(); err != nil {
+		t.Fatal(err)
+	}
+
+	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
+	err = storage.insertSample("testdb", "testcoll", sample)
+	assert.Nil(t, err)
+
+	collections, err := storage.listCollections("testdb")
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"testcoll"}, collections)
+}
+
+func TestListMetricsPerfDb(t *testing.T) {
+	var err error
+	var storage *perfDb
+	if storage, err = newTmpStorage(); err != nil {
+		t.Fatal(err)
+	}
+
+	sample := map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0}
+	err = storage.insertSample("testdb", "testcoll", sample)
+	assert.Nil(t, err)
+
+	metrics, err := storage.listMetrics("testdb", "testcoll")
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"cpu"}, metrics)
 }
