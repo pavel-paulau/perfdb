@@ -15,22 +15,11 @@ import (
 )
 
 var (
-	logger      *golog.Logger
-	db, address *string
-	timeout     *time.Duration
-	storage     storageHandler
+	logger                    *golog.Logger
+	db, address, engine, path *string
+	timeout                   *time.Duration
+	storage                   storageHandler
 )
-
-type storageHandler interface {
-	listDatabases() ([]string, error)
-	listSources(dbname string) ([]string, error)
-	listMetrics(dbname, collection string) ([]string, error)
-	addSample(dbname, collection string, sample map[string]interface{}) error
-	getRawValues(dbname, collection, metric string) (map[string]float64, error)
-	getSummary(dbname, collection, metric string) (map[string]interface{}, error)
-	getHeatMap(dbname, collection, metric string) (*heatMap, error)
-	getHistogram(dbname, collection, metric string) (map[string]float64, error)
-}
 
 func requestLog(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -43,8 +32,10 @@ func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
-	db = flag.String("db", "127.0.0.1:27017", "comma separated database host[:port] addresses")
-	timeout = flag.Duration("timeout", 30*time.Second, "request timeout")
+	db = flag.String("db", "127.0.0.1:27017", "comma separated database host[:port] addresses (MongoDB/TokuMX)")
+	timeout = flag.Duration("timeout", 30*time.Second, "request timeout (MongoDB/TokuMX)")
+	engine = flag.String("engine", "mongodb", "backend engine (mongodb or perfdb)")
+	path = flag.String("path", "/tmp/perfdb", "PerfDB data directory")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
@@ -53,8 +44,14 @@ func init() {
 func main() {
 	// Database handler
 	var err error
-	if storage, err = newMongoDB(strings.Split(*db, ","), *timeout); err != nil {
-		os.Exit(1)
+	if *engine == "mongodb" {
+		if storage, err = newMongoDB(strings.Split(*db, ","), *timeout); err != nil {
+			os.Exit(1)
+		}
+	} else {
+		if storage, err = newPerfDB(*path); err != nil {
+			os.Exit(1)
+		}
 	}
 
 	// Static assets
