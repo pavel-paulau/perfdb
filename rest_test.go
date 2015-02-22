@@ -250,7 +250,7 @@ func TestHeatMap(t *testing.T) {
 	assert.Equal(t, hm["minTimestamp"], 0)
 	assert.Equal(t, hm["maxTimestamp"], 0)
 	assert.Equal(t, hm["maxValue"], 0)
-	assert.Equal(t, hm["map"].([]interface{})[height-1].([]interface{})[width-1], 0)
+	assert.Equal(t, hm["map"].([]interface{})[heatMapHeight-1].([]interface{})[heatMapWidth-1], 0)
 	storageMock.Mock.AssertExpectations(t)
 }
 

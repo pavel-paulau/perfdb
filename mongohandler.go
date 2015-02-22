@@ -13,17 +13,6 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-type storageHandler interface {
-	listDatabases() ([]string, error)
-	listCollections(dbname string) ([]string, error)
-	listMetrics(dbname, collection string) ([]string, error)
-	insertSample(dbname, collection string, sample map[string]interface{}) error
-	findValues(dbname, collection, metric string) (map[string]float64, error)
-	aggregate(dbname, collection, metric string) (map[string]interface{}, error)
-	getHeatMap(dbname, collection, metric string) (*heatMap, error)
-	getHistogram(dbname, collection, metric string) (map[string]float64, error)
-}
-
 type mongoHandler struct {
 	Session *mgo.Session
 }
@@ -216,30 +205,6 @@ func (mongo *mongoHandler) aggregate(dbname, collection, metric string) (map[str
 	return summary, nil
 }
 
-type heatMap struct {
-	MinTS    int64   `json:"minTimestamp"`
-	MaxTS    int64   `json:"maxTimestamp"`
-	MaxValue float64 `json:"maxValue"`
-	Map      [][]int `json:"map"`
-}
-
-const (
-	height = 60
-	width  = 120
-)
-
-func newHeatMap() *heatMap {
-	hm := heatMap{}
-	hm.Map = [][]int{}
-	for y := 0; y < height; y++ {
-		hm.Map = append(hm.Map, []int{})
-		for x := 0; x < width; x++ {
-			hm.Map[y] = append(hm.Map[y], 0)
-		}
-	}
-	return &hm
-}
-
 func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
 	session := mongo.Session.New()
 	defer session.Close()
@@ -282,12 +247,12 @@ func (mongo *mongoHandler) getHeatMap(dbname, collection, metric string) (*heatM
 		if err != nil {
 			return nil, err
 		}
-		x := math.Floor(width * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
-		y := math.Floor(height * doc["v"].(float64) / hm.MaxValue)
-		if x == width {
+		x := math.Floor(heatMapWidth * float64(tsInt-hm.MinTS) / float64(hm.MaxTS-hm.MinTS))
+		y := math.Floor(heatMapHeight * doc["v"].(float64) / hm.MaxValue)
+		if x == heatMapWidth {
 			x--
 		}
-		if y == height {
+		if y == heatMapHeight {
 			y--
 		}
 		hm.Map[int(y)][int(x)]++

@@ -21,6 +21,17 @@ var (
 	storage     storageHandler
 )
 
+type storageHandler interface {
+	listDatabases() ([]string, error)
+	listCollections(dbname string) ([]string, error)
+	listMetrics(dbname, collection string) ([]string, error)
+	insertSample(dbname, collection string, sample map[string]interface{}) error
+	findValues(dbname, collection, metric string) (map[string]float64, error)
+	aggregate(dbname, collection, metric string) (map[string]interface{}, error)
+	getHeatMap(dbname, collection, metric string) (*heatMap, error)
+	getHistogram(dbname, collection, metric string) (map[string]float64, error)
+}
+
 func requestLog(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		logger.Infof("%s %s", r.Method, r.URL)
