@@ -8,6 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
+)
+
+const (
+	dataFileExt = ".data"
 )
 
 type perfDB struct {
@@ -55,7 +60,8 @@ func (pdb *perfDB) listMetrics(dbname, collection string) ([]string, error) {
 	}
 	metrics := []string{}
 	for _, f := range files {
-		metrics = append(metrics, f.Name())
+		fname := strings.Replace(f.Name(), dataFileExt, "", 1)
+		metrics = append(metrics, fname)
 	}
 	return metrics, nil
 }
@@ -66,7 +72,7 @@ func (pdb *perfDB) getRawValues(dbname, collection, metric string) (map[string]f
 		return nil, err
 	}
 
-	dstFile := filepath.Join(dstDir, metric)
+	dstFile := filepath.Join(dstDir, metric+dataFileExt)
 
 	file, err := os.Open(dstFile)
 	if err != nil {
@@ -103,7 +109,7 @@ func (pdb *perfDB) addSample(dbname, collection string, sample map[string]interf
 		return err
 	}
 
-	dstFile := filepath.Join(dstDir, sample["m"].(string))
+	dstFile := filepath.Join(dstDir, sample["m"].(string)+dataFileExt)
 
 	file, err := os.OpenFile(dstFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
