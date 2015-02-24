@@ -103,13 +103,13 @@ func (pdb *perfDB) getRawValues(dbname, collection, metric string) (map[string]f
 	return values, nil
 }
 
-func (pdb *perfDB) addSample(dbname, collection string, sample map[string]interface{}) error {
+func (pdb *perfDB) addSample(dbname, collection, metric string, sample Sample) error {
 	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
 	if err := os.MkdirAll(dstDir, 0775); err != nil {
 		return err
 	}
 
-	dstFile := filepath.Join(dstDir, sample["m"].(string)+dataFileExt)
+	dstFile := filepath.Join(dstDir, metric+dataFileExt)
 
 	file, err := os.OpenFile(dstFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -118,7 +118,7 @@ func (pdb *perfDB) addSample(dbname, collection string, sample map[string]interf
 	}
 	defer file.Close()
 
-	if _, err := fmt.Fprintf(file, "%s %025.12f\n", sample["ts"], sample["v"]); err != nil {
+	if _, err := fmt.Fprintf(file, "%s %025.12f\n", sample.ts, sample.v); err != nil {
 		logger.Critical(err)
 		return err
 	}

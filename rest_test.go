@@ -156,9 +156,8 @@ func TestGetRawValuesErrorMongo(t *testing.T) {
 
 func TestAddSampleMongo(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("addSample",
-		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
-	).Return(nil)
+	storageMock.Mock.On("addSample", "snapshot", "source", "cpu",
+		Sample{"1411940889515410774", 99.0}).Return(nil)
 	storage = storageMock
 
 	req, _ := http.NewRequest("POST", "/snapshot/source?ts=1411940889515410774",
@@ -174,9 +173,8 @@ func TestAddSampleMongo(t *testing.T) {
 
 func TestAddSampleErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
-	storageMock.Mock.On("addSample",
-		"snapshot", "source", map[string]interface{}{"ts": "1411940889515410774", "m": "cpu", "v": 99.0},
-	).Return(ErrTest)
+	storageMock.Mock.On("addSample", "snapshot", "source", "cpu",
+		Sample{"1411940889515410774", 99.0}).Return(ErrTest)
 	storage = storageMock
 
 	req, err := http.NewRequest("POST", "/snapshot/source?ts=1411940889515410774",

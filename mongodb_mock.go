@@ -28,8 +28,8 @@ func (m *mongoMock) getRawValues(dbname, collection, metric string) (map[string]
 	return args.Get(0).(map[string]float64), args.Error(1)
 }
 
-func (m *mongoMock) addSample(dbname, collection string, sample map[string]interface{}) error {
-	args := m.Mock.Called(dbname, collection, sample)
+func (m *mongoMock) addSample(dbname, collection, metric string, sample Sample) error {
+	args := m.Mock.Called(dbname, collection, metric, sample)
 	return args.Error(0)
 }
 

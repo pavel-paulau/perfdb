@@ -214,13 +214,9 @@ func addSamples(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for m, v := range samples {
-		sample := map[string]interface{}{
-			"ts": ts,
-			"m":  m,
-			"v":  v.(float64),
-		}
-		go storage.addSample(dbname, source, sample)
+	for metric, value := range samples {
+		sample := Sample{ts, value.(float64)}
+		go storage.addSample(dbname, source, metric, sample)
 	}
 }
 

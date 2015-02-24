@@ -101,12 +101,18 @@ func (mongo *mongoDB) getRawValues(dbname, collection, metric string) (map[strin
 	return values, nil
 }
 
-func (mongo *mongoDB) addSample(dbname, collection string, sample map[string]interface{}) error {
+func (mongo *mongoDB) addSample(dbname, collection, metric string, sample Sample) error {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
 
-	if err := _collection.Insert(sample); err != nil {
+	record := map[string]interface{}{
+		"ts": sample.ts,
+		"m":  metric,
+		"v":  sample.v,
+	}
+
+	if err := _collection.Insert(record); err != nil {
 		return err
 	}
 	logger.Infof("Successfully added new sample to %s.%s", dbname, collection)
