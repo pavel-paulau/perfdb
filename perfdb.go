@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 type perfDB struct {
@@ -79,13 +79,14 @@ func (pdb *perfDB) getRawValues(dbname, collection, metric string) (map[string]f
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		sample := strings.Fields(scanner.Text())
+		record := scanner.Text()
 		var value float64
-		if value, err = strconv.ParseFloat(sample[1], 64); err != nil {
+		if value, err = strconv.ParseFloat(record[20:], 64); err != nil {
 			logger.Critical(err)
 			return nil, err
 		}
-		values[sample[0]] = value
+		ts := record[:19]
+		values[ts] = value
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -118,9 +119,49 @@ func (pdb *perfDB) addSample(dbname, collection string, sample map[string]interf
 	return nil
 }
 
-func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]float64, error) {
+	dstDir := filepath.Join(pdb.BaseDir, dbname, collection)
+	if err := os.MkdirAll(dstDir, 0775); err != nil {
+		return nil, err
+	}
+
+	dstFile := filepath.Join(dstDir, metric)
+
+	file, err := os.Open(dstFile)
+	if err != nil {
+		logger.Critical(err)
+		return nil, err
+	}
+	defer file.Close()
+
+	summary := map[string]float64{
+		"max":   math.Inf(-1),
+		"min":   math.Inf(+1),
+		"count": 0,
+		"avg":   0,
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var value float64
+		if value, err = strconv.ParseFloat(scanner.Text()[20:], 64); err != nil {
+			logger.Critical(err)
+			return nil, err
+		}
+		summary["max"] = math.Max(summary["max"], value)
+		summary["min"] = math.Min(summary["min"], value)
+		summary["avg"] = (summary["count"]*summary["avg"] + value) / (summary["count"] + 1)
+		summary["count"]++
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Critical(err)
+		return nil, err
+	}
+
+	return summary, nil
 }
+
 func (pdb *perfDB) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
 	return newHeatMap(), nil
 }

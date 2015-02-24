@@ -133,7 +133,7 @@ func calcPercentile(data []float64, p float64) float64 {
 
 const queryLimit = 10000
 
-func (mongo *mongoDB) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
+func (mongo *mongoDB) getSummary(dbname, collection, metric string) (map[string]float64, error) {
 	session := mongo.Session.New()
 	defer session.Close()
 	_collection := session.DB(dbPrefix + dbname).C(collection)
@@ -165,16 +165,16 @@ func (mongo *mongoDB) getSummary(dbname, collection, metric string) (map[string]
 			},
 		},
 	)
-	summaries := []map[string]interface{}{}
+	summaries := []map[string]float64{}
 	if err := pipe.All(&summaries); err != nil {
 		return nil, err
 	}
 	if len(summaries) == 0 {
-		return map[string]interface{}{}, nil
+		return map[string]float64{}, nil
 	}
 	summary := summaries[0]
 
-	count := summary["count"].(int)
+	count := summary["count"]
 	if count < queryLimit {
 		// Don't perform in-memory aggregation if limit exceeded
 		var docs []map[string]interface{}
@@ -193,9 +193,9 @@ func (mongo *mongoDB) getSummary(dbname, collection, metric string) (map[string]
 		// Calculate percentiles using index-based sorting at database level
 		var result []map[string]interface{}
 		for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99} {
-			skip := int(float64(count)*percentile) - 1
+			skip := int(count*percentile) - 1
 			if err := _collection.Find(bson.M{"m": metric}).Sort("v").Skip(skip).Limit(1).All(&result); err != nil {
-				return map[string]interface{}{}, err
+				return map[string]float64{}, err
 			}
 			p := fmt.Sprintf("p%v", percentile*100)
 			summary[p] = result[0]["v"].(float64)
