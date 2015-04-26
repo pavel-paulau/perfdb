@@ -5,8 +5,10 @@ install:
   - go get bitbucket.org/tebeka/nrsc
   - go get github.com/alexcesaro/log
   - go get github.com/axw/gocov/gocov
+  - go get github.com/davecheney/profile
   - go get github.com/gorilla/mux
   - go get github.com/mattn/goveralls
+  - go get github.com/pmylund/go-cache
   - go get github.com/stretchr/testify/assert
   - go get github.com/stretchr/testify/mock
   - go get golang.org/x/tools/cmd/cover

@@ -205,7 +205,7 @@ func TestSummaryMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("getSummary",
-		"snapshot", "source", "cpu").Return(map[string]float64{"mean": 100}, nil)
+		"snapshot", "source", "cpu").Return(map[string]interface{}{"mean": 100}, nil)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot/source/cpu/summary", nil)
@@ -221,7 +221,7 @@ func TestSummaryErrorMongo(t *testing.T) {
 	storageMock := new(mongoMock)
 	storageMock.Mock.On("listDatabases").Return([]string{"snapshot"}, nil)
 	storageMock.Mock.On("getSummary", "snapshot", "source", "cpu").Return(
-		map[string]float64{}, ErrTest)
+		map[string]interface{}{}, ErrTest)
 	storage = storageMock
 
 	req, _ := http.NewRequest("GET", "/snapshot/source/cpu/summary", nil)
@@ -283,7 +283,8 @@ func newTmpStorage() (*perfDB, error) {
 	var tmpDir string
 	var err error
 
-	if tmpDir, err = ioutil.TempDir("", ""); err != nil {
+	os.Mkdir("tmp", 0755)
+	if tmpDir, err = ioutil.TempDir("tmp", ""); err != nil {
 		return nil, err
 	}
 

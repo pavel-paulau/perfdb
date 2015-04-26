@@ -6,19 +6,18 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
-	"time"
 
 	"bitbucket.org/tebeka/nrsc"
 	"github.com/alexcesaro/log"
 	"github.com/alexcesaro/log/golog"
+	"github.com/davecheney/profile"
 )
 
 var (
-	logger                    *golog.Logger
-	db, address, engine, path *string
-	timeout                   *time.Duration
-	storage                   storageHandler
+	logger        *golog.Logger
+	cpu           *bool
+	address, path *string
+	storage       storageHandler
 )
 
 func requestLog(handler http.Handler) http.Handler {
@@ -29,29 +28,30 @@ func requestLog(handler http.Handler) http.Handler {
 }
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(2)
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
-	db = flag.String("db", "127.0.0.1:27017", "comma separated database host[:port] addresses (MongoDB/TokuMX)")
-	timeout = flag.Duration("timeout", 30*time.Second, "request timeout (MongoDB/TokuMX)")
-	engine = flag.String("engine", "mongodb", "backend engine (mongodb or perfdb)")
 	path = flag.String("path", "/tmp/perfdb", "PerfDB data directory")
+	cpu = flag.Bool("cpu", false, "Enable CPU profiling")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
 }
 
 func main() {
+	// Optionally enable CPU profiling
+	if *cpu {
+		cfg := profile.Config{
+			ProfilePath: ".",
+			CPUProfile:  true,
+		}
+		defer profile.Start(&cfg).Stop()
+	}
+
 	// Database handler
 	var err error
-	if *engine == "mongodb" {
-		if storage, err = newMongoDB(strings.Split(*db, ","), *timeout); err != nil {
-			os.Exit(1)
-		}
-	} else {
-		if storage, err = newPerfDB(*path); err != nil {
-			os.Exit(1)
-		}
+	if storage, err = newPerfDB(*path); err != nil {
+		os.Exit(1)
 	}
 
 	// Static assets

@@ -33,9 +33,9 @@ func (m *mongoMock) addSample(dbname, collection, metric string, sample Sample) 
 	return args.Error(0)
 }
 
-func (m *mongoMock) getSummary(dbname, collection, metric string) (map[string]float64, error) {
+func (m *mongoMock) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
 	args := m.Mock.Called(dbname, collection, metric)
-	return args.Get(0).(map[string]float64), args.Error(1)
+	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
 
 func (m *mongoMock) getHeatMap(dbname, collection, metric string) (*heatMap, error) {

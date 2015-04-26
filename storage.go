@@ -11,7 +11,7 @@ type storageHandler interface {
 	listMetrics(dbname, collection string) ([]string, error)
 	addSample(dbname, collection, metric string, sample Sample) error
 	getRawValues(dbname, collection, metric string) (map[string]float64, error)
-	getSummary(dbname, collection, metric string) (map[string]float64, error)
+	getSummary(dbname, collection, metric string) (map[string]interface{}, error)
 	getHeatMap(dbname, collection, metric string) (*heatMap, error)
 	getHistogram(dbname, collection, metric string) (map[string]float64, error)
 }
