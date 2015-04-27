@@ -57,7 +57,7 @@ func main() {
 	// Controller
 	controller := newController(storage)
 
-	// RESTful API
+	// RESTful API and HTML pages
 	http.Handle("/", newRouter(controller))
 
 	// Static assets

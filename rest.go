@@ -2,13 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
-
-	"bitbucket.org/tebeka/nrsc"
 )
 
 type httpResponse struct {
@@ -24,23 +19,6 @@ func (r httpResponse) String() (s string) {
 	}
 	s = string(b)
 	return
-}
-
-func readHTML(path string) (string, error) {
-	var html nrsc.Resource
-	if html = nrsc.Get(path); html == nil {
-		return "", errors.New("cannot read HTML")
-	}
-	var htmlReader io.Reader
-	var err error
-	if htmlReader, err = html.Open(); err != nil {
-		return "", err
-	}
-	var content []byte
-	if content, err = ioutil.ReadAll(htmlReader); err != nil {
-		return "", err
-	}
-	return string(content), nil
 }
 
 func propagateError(rw http.ResponseWriter, err error, code int) {
@@ -61,9 +39,4 @@ func propagateError(rw http.ResponseWriter, err error, code int) {
 func validJSON(rw http.ResponseWriter, data interface{}) {
 	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(rw, httpResponse{data})
-}
-
-func validHTML(rw http.ResponseWriter, content string) {
-	rw.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(rw, content)
 }

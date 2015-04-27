@@ -115,15 +115,6 @@ func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 	validJSON(rw, values)
 }
 
-func (c *Controller) getLineChart(rw http.ResponseWriter, r *http.Request) {
-	content, err := readHTML("linechart.html")
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validHTML(rw, content)
-}
-
 func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	var tsNano int64
 	if timestamps, ok := r.URL.Query()["ts"]; ok {
