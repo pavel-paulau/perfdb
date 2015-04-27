@@ -88,7 +88,7 @@ func stringInSlice(a string, array []string) bool {
 	return false
 }
 
-func checkDbExists(rw http.ResponseWriter, dbname string) error {
+func checkDbExists(dbname string) error {
 	if allDbs, err := storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
 		return errors.New("not found")
 	}
@@ -99,7 +99,7 @@ func listSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
@@ -116,7 +116,7 @@ func listMetrics(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 	source := vars["source"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
@@ -135,7 +135,7 @@ func getRawValues(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
@@ -154,7 +154,7 @@ func getSummary(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
@@ -226,7 +226,7 @@ func getHeatMap(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
@@ -245,7 +245,7 @@ func getHistogram(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
-	if err := checkDbExists(rw, dbname); err != nil {
+	if err := checkDbExists(dbname); err != nil {
 		propagateError(rw, err, 404)
 		return
 	}
