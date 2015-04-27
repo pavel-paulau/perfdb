@@ -7,11 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-	"time"
 
 	"bitbucket.org/tebeka/nrsc"
-	"github.com/gorilla/mux"
 )
 
 type httpResponse struct {
@@ -29,20 +26,21 @@ func (r httpResponse) String() (s string) {
 	return
 }
 
-func newRouter() *mux.Router {
-	r := mux.NewRouter()
-	r.StrictSlash(true)
-	r.HandleFunc("/", listDatabases).Methods("GET")
-	r.HandleFunc("/{db}", listSources).Methods("GET")
-	r.HandleFunc("/{db}/{source}", listMetrics).Methods("GET")
-	r.HandleFunc("/{db}/{source}", addSamples).Methods("POST")
-	r.HandleFunc("/{db}/{source}/{metric}", getRawValues).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/summary", getSummary).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/linechart", getLineChart).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/heatmap", getHeatMap).Methods("GET")
-	r.HandleFunc("/{db}/{source}/{metric}/histo", getHistogram).Methods("GET")
-
-	return r
+func readHTML(path string) (string, error) {
+	var html nrsc.Resource
+	if html = nrsc.Get(path); html == nil {
+		return "", errors.New("cannot read HTML")
+	}
+	var htmlReader io.Reader
+	var err error
+	if htmlReader, err = html.Open(); err != nil {
+		return "", err
+	}
+	var content []byte
+	if content, err = ioutil.ReadAll(htmlReader); err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
 
 func propagateError(rw http.ResponseWriter, err error, code int) {
@@ -68,192 +66,4 @@ func validJSON(rw http.ResponseWriter, data interface{}) {
 func validHTML(rw http.ResponseWriter, content string) {
 	rw.Header().Set("Content-Type", "text/html")
 	fmt.Fprintf(rw, content)
-}
-
-func listDatabases(rw http.ResponseWriter, r *http.Request) {
-	databases, err := storage.listDatabases()
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, databases)
-}
-
-func stringInSlice(a string, array []string) bool {
-	for _, b := range array {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-func checkDbExists(dbname string) error {
-	if allDbs, err := storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
-		return errors.New("not found")
-	}
-	return nil
-}
-
-func listSources(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-	sources, err := storage.listSources(dbname)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, sources)
-}
-
-func listMetrics(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-
-	metrics, err := storage.listMetrics(dbname, source)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, metrics)
-}
-
-func getRawValues(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-	metric := vars["metric"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-
-	values, err := storage.getRawValues(dbname, source, metric)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, values)
-}
-
-func getSummary(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-	metric := vars["metric"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-
-	values, err := storage.getSummary(dbname, source, metric)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, values)
-}
-
-func readHTML(path string) (string, error) {
-	var html nrsc.Resource
-	if html = nrsc.Get(path); html == nil {
-		return "", errors.New("cannot read HTML")
-	}
-	var htmlReader io.Reader
-	var err error
-	if htmlReader, err = html.Open(); err != nil {
-		return "", err
-	}
-	var content []byte
-	if content, err = ioutil.ReadAll(htmlReader); err != nil {
-		return "", err
-	}
-	return string(content), nil
-}
-
-func getLineChart(rw http.ResponseWriter, r *http.Request) {
-	content, err := readHTML("linechart.html")
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validHTML(rw, content)
-}
-
-func addSamples(rw http.ResponseWriter, r *http.Request) {
-	var tsNano int64
-	if timestamps, ok := r.URL.Query()["ts"]; ok {
-		tsNano = parseTimestamp(timestamps[0])
-	} else {
-		tsNano = time.Now().UnixNano()
-	}
-	ts := strconv.FormatInt(tsNano, 10)
-
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-
-	var samples map[string]interface{}
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&samples)
-	if err != nil {
-		propagateError(rw, err, 400)
-		return
-	}
-
-	for metric, value := range samples {
-		sample := Sample{ts, value.(float64)}
-		go storage.addSample(dbname, source, metric, sample)
-	}
-}
-
-func getHeatMap(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-	metric := vars["metric"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-
-	values, err := storage.getHeatMap(dbname, source, metric)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, values)
-}
-
-func getHistogram(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	source := vars["source"]
-	metric := vars["metric"]
-
-	if err := checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
-		return
-	}
-
-	values, err := storage.getHistogram(dbname, source, metric)
-	if err != nil {
-		propagateError(rw, err, 500)
-		return
-	}
-	validJSON(rw, values)
 }

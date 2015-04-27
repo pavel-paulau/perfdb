@@ -17,7 +17,6 @@ var (
 	logger        *golog.Logger
 	cpu           *bool
 	address, path *string
-	storage       storageHandler
 )
 
 func requestLog(handler http.Handler) http.Handler {
@@ -50,15 +49,19 @@ func main() {
 
 	// Database handler
 	var err error
+	var storage storageHandler
 	if storage, err = newPerfDB(*path); err != nil {
 		os.Exit(1)
 	}
 
-	// Static assets
-	nrsc.Handle("/static/")
+	// Controller
+	controller := newController(storage)
 
 	// RESTful API
-	http.Handle("/", newRouter())
+	http.Handle("/", newRouter(controller))
+
+	// Static assets
+	nrsc.Handle("/static/")
 
 	// Banner and launcher
 	banner := fmt.Sprintf("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://%s/\n", *address)
