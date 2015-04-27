@@ -267,10 +267,10 @@ func TestHeatMapMongo(t *testing.T) {
 	assert.Nil(t, err, err)
 
 	assert.Equal(t, 200, rw.Code)
-	assert.Equal(t, hm["minTimestamp"], 0)
-	assert.Equal(t, hm["maxTimestamp"], 0)
-	assert.Equal(t, hm["maxValue"], 0)
-	assert.Equal(t, hm["map"].([]interface{})[heatMapHeight-1].([]interface{})[heatMapWidth-1], 0)
+	assert.Equal(t, hm["minTimestamp"], float64(0))
+	assert.Equal(t, hm["maxTimestamp"], float64(0))
+	assert.Equal(t, hm["maxValue"], float64(0))
+	assert.Equal(t, hm["map"].([]interface{})[heatMapHeight-1].([]interface{})[heatMapWidth-1], float64(0))
 	storageMock.Mock.AssertExpectations(t)
 }
 
