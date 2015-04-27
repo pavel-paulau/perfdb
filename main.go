@@ -49,7 +49,7 @@ func main() {
 
 	// Database handler
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newPerfDB(*path); err != nil {
 		os.Exit(1)
 	}

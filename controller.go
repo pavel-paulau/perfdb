@@ -11,10 +11,10 @@ import (
 )
 
 type Controller struct {
-	storage storageHandler
+	storage Storage
 }
 
-func newController(storage storageHandler) *Controller {
+func newController(storage Storage) *Controller {
 	return &Controller{storage}
 }
 

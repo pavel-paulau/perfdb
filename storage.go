@@ -5,7 +5,7 @@ type Sample struct {
 	v  float64
 }
 
-type storageHandler interface {
+type Storage interface {
 	listDatabases() ([]string, error)
 	listSources(dbname string) ([]string, error)
 	listMetrics(dbname, collection string) ([]string, error)

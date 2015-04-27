@@ -316,7 +316,7 @@ func newTmpStorage() (*perfDB, error) {
 
 func TestListDatabasesPerfDb(t *testing.T) {
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -333,7 +333,7 @@ func TestListDatabasesPerfDb(t *testing.T) {
 
 func TestAddSamplePerfDb(t *testing.T) {
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -352,7 +352,7 @@ func TestAddSamplePerfDb(t *testing.T) {
 
 func TestListSourcesPerfDb(t *testing.T) {
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -375,7 +375,7 @@ func TestListSourcesPerfDb(t *testing.T) {
 
 func TestListMetricsPerfDb(t *testing.T) {
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -398,7 +398,7 @@ func TestListMetricsPerfDb(t *testing.T) {
 
 func TestGetRawValuesPerfDb(t *testing.T) {
 	var err error
-	var storage storageHandler
+	var storage Storage
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
