@@ -301,8 +301,7 @@ func newTmpStorage() (*perfDB, error) {
 	var tmpDir string
 	var err error
 
-	os.Mkdir("tmp", 0755)
-	if tmpDir, err = ioutil.TempDir("tmp", ""); err != nil {
+	if tmpDir, err = ioutil.TempDir("", ""); err != nil {
 		return nil, err
 	}
 
