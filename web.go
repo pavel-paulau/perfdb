@@ -35,7 +35,7 @@ func validHTML(rw http.ResponseWriter, content string) {
 func getLineChart(rw http.ResponseWriter, r *http.Request) {
 	content, err := readHTML("linechart.html")
 	if err != nil {
-		propagateError(rw, err, 500)
+		logger.Critical(err)
 		return
 	}
 	validHTML(rw, content)

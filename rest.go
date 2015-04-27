@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -21,7 +22,13 @@ func (r httpResponse) String() (s string) {
 	return
 }
 
-func propagateError(rw http.ResponseWriter, err error, code int) {
+type restHanlder struct {}
+
+func (rest *restHanlder) readRequest(r *http.Request) io.ReadCloser {
+	return r.Body
+}
+
+func (rest *restHanlder) propagateError(rw http.ResponseWriter, err error, code int) {
 	logger.Critical(err)
 	rw.Header().Set("Content-Type", "application/json")
 	switch code {
@@ -36,7 +43,7 @@ func propagateError(rw http.ResponseWriter, err error, code int) {
 	fmt.Fprint(rw, httpResponse{resp})
 }
 
-func validJSON(rw http.ResponseWriter, data interface{}) {
+func (rest *restHanlder) validJSON(rw http.ResponseWriter, data interface{}) {
 	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(rw, httpResponse{data})
 }

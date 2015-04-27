@@ -12,19 +12,20 @@ import (
 
 type Controller struct {
 	storage Storage
+	rest restHanlder
 }
 
 func newController(storage Storage) *Controller {
-	return &Controller{storage}
+	return &Controller{storage, restHanlder{}}
 }
 
 func (c *Controller) listDatabases(rw http.ResponseWriter, r *http.Request) {
 	databases, err := c.storage.listDatabases()
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, databases)
+	c.rest.validJSON(rw, databases)
 }
 
 func stringInSlice(a string, array []string) bool {
@@ -48,15 +49,15 @@ func (c *Controller) listSources(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 	sources, err := c.storage.listSources(dbname)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, sources)
+	c.rest.validJSON(rw, sources)
 }
 
 func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -65,16 +66,16 @@ func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 
 	metrics, err := c.storage.listMetrics(dbname, source)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, metrics)
+	c.rest.validJSON(rw, metrics)
 }
 
 func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
@@ -84,16 +85,16 @@ func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := c.storage.getRawValues(dbname, source, metric)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, values)
+	c.rest.validJSON(rw, values)
 }
 
 func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
@@ -103,16 +104,16 @@ func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := c.storage.getSummary(dbname, source, metric)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, values)
+	c.rest.validJSON(rw, values)
 }
 
 func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
@@ -129,10 +130,10 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 
 	var samples map[string]interface{}
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(c.rest.readRequest(r))
 	err := decoder.Decode(&samples)
 	if err != nil {
-		propagateError(rw, err, 400)
+		c.rest.propagateError(rw, err, 400)
 		return
 	}
 
@@ -149,16 +150,16 @@ func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := c.storage.getHeatMap(dbname, source, metric)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, values)
+	c.rest.validJSON(rw, values)
 }
 
 func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
@@ -168,14 +169,14 @@ func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	if err := c.checkDbExists(dbname); err != nil {
-		propagateError(rw, err, 404)
+		c.rest.propagateError(rw, err, 404)
 		return
 	}
 
 	values, err := c.storage.getHistogram(dbname, source, metric)
 	if err != nil {
-		propagateError(rw, err, 500)
+		c.rest.propagateError(rw, err, 500)
 		return
 	}
-	validJSON(rw, values)
+	c.rest.validJSON(rw, values)
 }
