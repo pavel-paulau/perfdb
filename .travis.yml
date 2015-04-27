@@ -15,4 +15,4 @@ install:
   - go get labix.org/v2/mgo
   - go get labix.org/v2/mgo/bson
 script:
-  - $HOME/gopath/bin/goveralls -repotoken $COVERALLS_TOKEN
+  - $HOME/gopath/bin/goveralls -v -repotoken $COVERALLS_TOKEN
