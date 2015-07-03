@@ -1,17 +1,18 @@
 package main
-
+ 
 type heatMap struct {
-	MinTS    int64   `json:"minTimestamp"`
-	MaxTS    int64   `json:"maxTimestamp"`
-	MaxValue float64 `json:"maxValue"`
-	Map      [][]int `json:"map"`
+	MinTS      int64   `json:"minTimestamp"`
+	MaxTS      int64   `json:"maxTimestamp"`
+	MaxValue   float64 `json:"maxValue"`
+	Map        [][]int `json:"map"`
+	maxDensity int     // Private field
 }
-
+ 
 const (
-	heatMapHeight = 60
-	heatMapWidth  = 120
+	heatMapHeight = 120
+	heatMapWidth  = 240
 )
-
+ 
 func newHeatMap() *heatMap {
 	hm := heatMap{}
 	hm.Map = [][]int{}

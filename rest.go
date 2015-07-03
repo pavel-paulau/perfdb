@@ -1,16 +1,15 @@
 package main
-
+ 
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
-
+ 
 type httpResponse struct {
 	Raw interface{}
 }
-
+ 
 func (r httpResponse) String() (s string) {
 	b, err := json.Marshal(r.Raw)
 	if err != nil {
@@ -21,29 +20,44 @@ func (r httpResponse) String() (s string) {
 	s = string(b)
 	return
 }
-
-type restHanlder struct {}
-
-func (rest *restHanlder) readRequest(r *http.Request) io.ReadCloser {
-	return r.Body
+ 
+type restHanlder struct {
+	rw http.ResponseWriter
+	r  *http.Request
 }
-
-func (rest *restHanlder) propagateError(rw http.ResponseWriter, err error, code int) {
+ 
+func (rest *restHanlder) open() error {
+	return nil
+}
+ 
+func (rest *restHanlder) readJSON() (interface{}, error) {
+	var data interface{}
+ 
+	decoder := json.NewDecoder(rest.r.Body)
+	err := decoder.Decode(&data)
+	if err != nil {
+		return nil, err
+	}
+ 
+	return data, nil
+}
+ 
+func (rest *restHanlder) writeError(err error, code int) {
 	logger.Critical(err)
-	rw.Header().Set("Content-Type", "application/json")
+	rest.rw.Header().Set("Content-Type", "application/json")
 	switch code {
 	case 400:
-		rw.WriteHeader(http.StatusBadRequest)
+		rest.rw.WriteHeader(http.StatusBadRequest)
 	case 404:
-		rw.WriteHeader(http.StatusNotFound)
+		rest.rw.WriteHeader(http.StatusNotFound)
 	case 500:
-		rw.WriteHeader(http.StatusInternalServerError)
+		rest.rw.WriteHeader(http.StatusInternalServerError)
 	}
 	resp := map[string]string{"error": err.Error()}
-	fmt.Fprint(rw, httpResponse{resp})
+	fmt.Fprint(rest.rw, httpResponse{resp})
 }
-
-func (rest *restHanlder) validJSON(rw http.ResponseWriter, data interface{}) {
-	rw.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(rw, httpResponse{data})
+ 
+func (rest *restHanlder) writeJSON(data interface{}) {
+	rest.rw.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(rest.rw, httpResponse{data})
 }

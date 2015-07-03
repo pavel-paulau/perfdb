@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -12,20 +10,38 @@ import (
 
 type Controller struct {
 	storage Storage
-	rest restHanlder
 }
 
 func newController(storage Storage) *Controller {
-	return &Controller{storage, restHanlder{}}
+	return &Controller{storage}
+}
+
+func newConn(rw http.ResponseWriter, r *http.Request) (API, error) {
+	var conn API
+	if values := r.Header["Sec-Websocket-Version"]; len(values) == 0 {
+		conn = &restHanlder{rw, r}
+	} else {
+		conn = &wsHandler{rw, r, nil}
+	}
+	err := conn.open()
+	return conn, err
 }
 
 func (c *Controller) listDatabases(rw http.ResponseWriter, r *http.Request) {
-	databases, err := c.storage.listDatabases()
+	conn, err := newConn(rw, r)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
 		return
 	}
-	c.rest.validJSON(rw, databases)
+
+	databases, err := c.storage.listDatabases()
+	if err != nil {
+		logger.Critical(err)
+		conn.writeError(err, 500)
+		return
+	}
+
+	conn.writeJSON(databases)
 }
 
 func stringInSlice(a string, array []string) bool {
@@ -48,16 +64,20 @@ func (c *Controller) listSources(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 	sources, err := c.storage.listSources(dbname)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, sources)
+	conn.writeJSON(sources)
 }
 
 func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -65,17 +85,21 @@ func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 	source := vars["source"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
 	metrics, err := c.storage.listMetrics(dbname, source)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, metrics)
+	conn.writeJSON(metrics)
 }
 
 func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
@@ -84,17 +108,21 @@ func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
 	values, err := c.storage.getRawValues(dbname, source, metric)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, values)
+	conn.writeJSON(values)
 }
 
 func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
@@ -103,17 +131,21 @@ func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
 	values, err := c.storage.getSummary(dbname, source, metric)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, values)
+	conn.writeJSON(values)
 }
 
 func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
@@ -123,24 +155,25 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	} else {
 		tsNano = time.Now().UnixNano()
 	}
-	ts := strconv.FormatInt(tsNano, 10)
 
 	vars := mux.Vars(r)
 	dbname := vars["db"]
 	source := vars["source"]
 
-	var samples map[string]interface{}
-	decoder := json.NewDecoder(c.rest.readRequest(r))
-	err := decoder.Decode(&samples)
+	conn, err := newConn(rw, r)
+
+	samples, err := conn.readJSON()
 	if err != nil {
-		c.rest.propagateError(rw, err, 400)
+		logger.Critical(err)
+		conn.writeError(err, 400)
 		return
 	}
 
-	for metric, value := range samples {
-		sample := Sample{ts, value.(float64)}
-		go c.storage.addSample(dbname, source, metric, sample)
+	for metric, value := range samples.(map[string]interface{}) {
+		sample := Sample{tsNano, value.(float64)}
+		c.storage.addSample(dbname, source, metric, sample)
 	}
+	conn.writeJSON(map[string]string{"status": "ok"})
 }
 
 func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
@@ -149,17 +182,21 @@ func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
-	values, err := c.storage.getHeatMap(dbname, source, metric)
+	hm, err := c.storage.getHeatMap(dbname, source, metric)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, values)
+	conn.writeJSON(hm)
 }
 
 func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
@@ -168,15 +205,47 @@ func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
 	source := vars["source"]
 	metric := vars["metric"]
 
+	conn, err := newConn(rw, r)
+
 	if err := c.checkDbExists(dbname); err != nil {
-		c.rest.propagateError(rw, err, 404)
+		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
 	values, err := c.storage.getHistogram(dbname, source, metric)
 	if err != nil {
-		c.rest.propagateError(rw, err, 500)
+		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
 	}
-	c.rest.validJSON(rw, values)
+	conn.writeJSON(values)
+}
+
+func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dbname := vars["db"]
+	source := vars["source"]
+	metric := vars["metric"]
+
+	var title string
+	if titles, ok := r.URL.Query()["label"]; ok {
+		title = titles[0]
+	} else {
+		title = metric
+	}
+
+	if err := c.checkDbExists(dbname); err != nil {
+		logger.Critical(err)
+		return
+	}
+
+	hm, err := c.storage.getHeatMap(dbname, source, metric)
+	if err != nil {
+		logger.Critical(err)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "image/svg+xml")
+	generateSVG(rw, hm, title)
 }

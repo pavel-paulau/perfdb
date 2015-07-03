@@ -1,10 +1,10 @@
 package main
-
+ 
 import (
 	"strconv"
 	"time"
 )
-
+ 
 func parseTimestamp(ts string) int64 {
 	if tsInt, err := strconv.ParseInt(ts, 10, 64); err == nil {
 		switch {
@@ -18,7 +18,7 @@ func parseTimestamp(ts string) int64 {
 			return time.Unix(tsInt, 0).UnixNano()
 		}
 	} else {
-		logger.Warningf("Invalid timestamp, using current time instead.")
+		logger.Warning("Invalid timestamp, using current time instead.")
 		return time.Now().UnixNano()
 	}
 	panic("Unreachable")

@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"bitbucket.org/tebeka/nrsc"
 	"github.com/alexcesaro/log"
 	"github.com/alexcesaro/log/golog"
 	"github.com/davecheney/profile"
@@ -59,9 +58,6 @@ func main() {
 
 	// RESTful API and HTML pages
 	http.Handle("/", newRouter(controller))
-
-	// Static assets
-	nrsc.Handle("/static/")
 
 	// Banner and launcher
 	banner := fmt.Sprintf("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://%s/\n", *address)

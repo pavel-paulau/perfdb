@@ -2,17 +2,16 @@ language: go
 go:
   - tip
 install:
-  - go get bitbucket.org/tebeka/nrsc
+  - go get github.com/ajstarks/svgo
   - go get github.com/alexcesaro/log
   - go get github.com/axw/gocov/gocov
   - go get github.com/davecheney/profile
   - go get github.com/gorilla/mux
+  - go get github.com/gorilla/websocket
   - go get github.com/mattn/goveralls
   - go get github.com/pmylund/go-cache
   - go get github.com/stretchr/testify/assert
   - go get github.com/stretchr/testify/mock
   - go get golang.org/x/tools/cmd/cover
-  - go get labix.org/v2/mgo
-  - go get labix.org/v2/mgo/bson
 script:
   - $HOME/gopath/bin/goveralls -v -repotoken $COVERALLS_TOKEN
