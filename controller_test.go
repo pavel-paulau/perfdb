@@ -16,7 +16,7 @@ import (
 // PerfDB Unit Tests
 
 func removeStorage(pdb *perfDB) {
-	os.RemoveAll(pdb.BaseDir)
+	os.RemoveAll(pdb.baseDir)
 }
 
 func newTmpStorage() (*perfDB, error) {
@@ -28,7 +28,7 @@ func newTmpStorage() (*perfDB, error) {
 	}
 
 	var storage *perfDB
-	if storage, err = newPerfDB(tmpDir); err != nil {
+	if storage, err = newPerfDB(tmpDir, true); err != nil {
 		return nil, err
 	}
 	runtime.SetFinalizer(storage, removeStorage)
