@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"time"
 
 	"github.com/ajstarks/svgo"
 )
@@ -29,14 +30,34 @@ func drawCanvas(canvas *svg.SVG, canvasSize size) {
 		"fill:white;stroke:none")
 }
 
-func drawXTitle(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin margin, title string) {
+func drawXTitle(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin margin, timeElapsed time.Duration) {
+	var title string
+
+	if timeElapsed.Hours() > 1 {
+		title = "Time elapsed, h"
+	} else if timeElapsed.Minutes() > 1 {
+		title = "Time elapsed, m"
+	} else {
+		title = "Time elapsed, s"
+	}
+
 	canvas.Text(chartMargin.left+chartInnerSize.width/2, canvasSize.height-6,
 		title, middleFontStyle)
 }
 
-func drawXAxis(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin margin, maxValue float64) {
+func drawXAxis(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin margin, timeElapsed time.Duration) {
+	var gridDuration float64
+
+	if timeElapsed.Hours() > 1 {
+		gridDuration = timeElapsed.Hours() / float64(gridSize.width)
+	} else if timeElapsed.Minutes() > 1 {
+		gridDuration = timeElapsed.Minutes() / float64(gridSize.width)
+	} else {
+		gridDuration = timeElapsed.Seconds() / float64(gridSize.width)
+	}
+
 	for i := 0; i <= gridSize.width; i++ {
-		tick := fmt.Sprintf("%.1f", float64(i)*float64(maxValue)/float64(gridSize.width))
+		tick := fmt.Sprintf("%.1f", float64(i)*gridDuration)
 		canvas.Text(chartMargin.left+i*chartInnerSize.width/gridSize.width,
 			canvasSize.height-chartMargin.bottom+15,
 			tick, middleFontStyle)
@@ -185,9 +206,9 @@ func generateSVG(output io.Writer, hm *heatMap, title string) {
 
 	drawHeatMap(canvas, canvasSize, chartInnerSize, chartMargin, hm)
 
-	maxHours := float64(hm.MaxTS-hm.MinTS) / math.Pow(10, 9) / 3600.0 // ns -> h
-	drawXAxis(canvas, canvasSize, chartInnerSize, chartMargin, maxHours)
-	drawXTitle(canvas, canvasSize, chartInnerSize, chartMargin, "Time elapsed, h")
+	timeElapsed := time.Duration(hm.MaxTS - hm.MinTS)
+	drawXTitle(canvas, canvasSize, chartInnerSize, chartMargin, timeElapsed)
+	drawXAxis(canvas, canvasSize, chartInnerSize, chartMargin, timeElapsed)
 
 	drawYAxis(canvas, canvasSize, chartInnerSize, chartMargin, hm)
 	drawYTitle(canvas, canvasSize, chartInnerSize, chartMargin, title)
