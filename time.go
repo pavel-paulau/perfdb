@@ -1,10 +1,10 @@
 package main
- 
+
 import (
 	"strconv"
 	"time"
 )
- 
+
 func parseTimestamp(ts string) int64 {
 	if tsInt, err := strconv.ParseInt(ts, 10, 64); err == nil {
 		switch {

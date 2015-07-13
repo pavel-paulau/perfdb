@@ -1,10 +1,10 @@
 package main
- 
+
 type Sample struct {
 	ts int64
 	v  float64
 }
- 
+
 type Storage interface {
 	listDatabases() ([]string, error)
 	listSources(dbname string) ([]string, error)
