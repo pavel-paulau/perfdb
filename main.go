@@ -29,7 +29,7 @@ func init() {
 	runtime.GOMAXPROCS(2)
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
-	path = flag.String("path", "/tmp/perfdb", "PerfDB data directory")
+	path = flag.String("path", "data", "PerfDB data directory")
 	cpu = flag.Bool("cpu", false, "Enable CPU profiling")
 	fsync = flag.Bool("fsync", false, "Enable fsync calls after every write operation")
 	flag.Parse()
