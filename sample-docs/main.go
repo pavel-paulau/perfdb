@@ -85,7 +85,7 @@ Histogram:
     http://127.0.0.1:8080/snapshot/source/metric/histo
 
 And heatmap graph:
-    http://127.0.0.1:8080/snapshot/source/metric/heatmap
+    http://127.0.0.1:8080/snapshot/source/metric/heatmap?label=Metric name, units
 `
 
 func init() {

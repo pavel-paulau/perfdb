@@ -90,11 +90,11 @@ output:
         "p99": 85.2
     }
 
-Built-in visualization using amazing D3 charts:
+Built-in heat map graphs in SVG format (use your browser to view):
 
-    $ http://localhost:8080/mybenchmark/app1/cpu_sys/linechart
+    http://localhost:8080/mybenchmark/app1/cpu_sys/heatmap
 
-![](docs/linechart.png)
+![](docs/heatmap.png)
 
 See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advanced report generation system.
 
