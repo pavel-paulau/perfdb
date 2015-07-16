@@ -3,108 +3,185 @@ perfkeeper
 
 [![Build Status](https://travis-ci.org/pavel-paulau/perfkeeper.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfkeeper) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfkeeper.svg)](https://coveralls.io/r/pavel-paulau/perfkeeper) [![GoDoc](https://godoc.org/github.com/pavel-paulau/perfkeeper?status.svg)](https://godoc.org/github.com/pavel-paulau/perfkeeper)
 
-**perfkeeper** is a storage for performance measurements. It's fast, flexible and reliable.
+**perfkeeper** is a time series database optimized for performance measurements.
 
 Why?
 ----
-There are many beautiful systems like [cube](https://github.com/square/cube). Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements. Other time series databases such as [KairosDB](https://github.com/kairosdb/kairosdb) or [OpenTSDB](http://opentsdb.net/) are overcomplicated or have impractical dependencies. Let's put it this way, **perfkeeper** is the best choice if all great features of [InfluxDB](http://influxdb.com/) are not needed yet.
 
-**perfkeeper** was created to address daily needs of performance benchmarking. It allows to maintain arbitrary samples collected during relatively short period of time. All samples are grouped by data source (e.g., OS stats or database metrics). In turn, sources are grouped within data snapshot which represents single benchmarking iteration. There are no reducers, you get data as it is.
+Yes, this is [yet](https://github.com/dustin/seriesly) [another](http://influxdb.com/) [time series](https://github.com/prometheus/prometheus) [database](https://github.com/Preetam/catena) written in Go.
+There are many other beautiful non-Go implementations like [cube](https://github.com/square/cube), [KairosDB](https://github.com/kairosdb/kairosdb) or [OpenTSDB](http://opentsdb.net/).
+Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements.
+Also many databases are overly complicated or have tons of dependencies.
 
-It's built on top of very fast components. All samples are automatically indexed and queries are nearly instantaneous. Interaction with storage is implemented via simple REST API. There are asynchronous and fully concurrent handlers behind every endpoint, so that your requests will never wait.
+**perfkeeper** was created to address daily needs of performance benchmarking.
+The storage was implemented so that one can accurately aggregate and visualize millions of samples.
+
+It's not aimed to support flexible queries. But it produces nice SVG graphs and helps to explore data via convenient REST API.
+
+The last but not least, **perfkeeper** is distributed as a single binary file with literally zero external dependencies.
 
 Storing samples
 ---------------
 
-Let's say you collect CPU stats every 5 seconds, each sample is represented by a JSON object or document:
+Let's say you measure application latency several times per second.
+Each sample is a JSON document:
 
-    {
-        "cpu_sys": 12.3,
-        "cpu_user": 50.4,
-        "cpu_idle": 37.3
-    }
+	{
+		"read_latency": 12.3
+	}
 
-You can persist your measurements by sending the following HTTP request:
+To persist measurements, send the following HTTP request:
 
-    $ curl -XPOST http://localhost:8080/mybenchmark/app1 -d @sample.json
+	curl -X POST http://localhost:8080/snapshot/source -d '{"read_latency":12.3}'
 
-Where:
+where:
 
-  `mybenchmark` is a common snapshot entity (time series database). You should change it before *any* test or benchmark iteration.
+  `snapshot` is a common snapshot entity (time series database name). It's recommended to create a separate snapshot for each benchmark.
 
-   `app1` is a source name. In this case we are using application name, it can be an IP address (e.g., "172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
+  `source` is a source name. It can be application name, IP address (e.g., "172.23.100.96"), database name (e.g., "mysql"), and etc.
 
-   `sample.json` is the JSON document which we described above.
+Obviously, you will rather use your favourite programming language to send HTTP requests.
+
+It's absolutely OK to create thousands of snapshots and sources.
+
+Aggregation and visualization
+-----------------------------
+
+This API returns JSON document with aggregated characteristics (mean, percentiles, and etc.):
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/summary | python -m json.tool
+	{
+		"avg": 5.82248,
+		"count": 200000,
+		"max": 100,
+		"min": 0,
+		"p50": 3,
+		"p80": 9,
+		"p90": 14,
+		"p95": 21,
+		"p99": 40,
+		"p99.9": 76
+	}
+
+Please notice that Python is used for demonstration purpose only.
+
+**perfkeeper** provides class-based histograms as well:
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/histo | python -m json.tool
+	{
+		"0.000000 - 6.666667": 71.57979797971558,
+		"6.666667 - 13.333333": 18.206060606073383
+		"13.333333 - 20.000000": 5.3737373737363505,
+		"20.000000 - 26.666667": 2.9090909090906827,
+		"26.666667 - 33.333333": 1.2848484848484691,
+		"33.333333 - 40.000000": 0.6464646464646343,
+	}
+
+The output is a set of frequencies (from 0 to 100%) for different ranges of values.
+
+Finally, it is possible to generate heat map graphs in SVG format (use your browser to view):
+
+	http://127.0.0.1:8080/snapshot/source/metric/heatmap
+
+![](docs/heatmap.png)
+
+Each rectangle is a cluster of values. The darker color corresponds to the denser population. 
+The legend on the right side of the graph (the vertical bar) should help to understand the density.
+
+Browsing data
+-------------
+
+As mentioned above, all samples are grouped by data source (e.g., OS stats or database metrics).
+In turn, sources are grouped within snapshot (database instance).
+
+To list all available snapshots, use the following request:
+
+	$ curl -s http://127.0.0.1:8080/ | python -m json.tool
+	[
+		"snapshot"
+	]
+
+To list all sources in specified snapshot, use request similar to:
+
+	$ curl -s http://127.0.0.1:8080/snapshot | python -m json.tool
+	[
+		"source"
+	]
+
+To list all metrics, use request similar to:
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source | python -m json.tool
+	[
+		"read_latency",
+		"write_latency"
+	]
 
 Querying samples
 ----------------
 
-It cannot be simpler:
+Only bulk queries are supported, but even they are not recommended.
 
-    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys
+To get the list of samples, use request similar to:
 
-Output is a JSON document as well:
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric | python -m json.tool
 
-    {
-        "1403736306507708119": 12.3,
-        "1403736306629829527": 71.4
-    }
+Output is a JSON document with all timestamps and values:
 
-where `1403736306507708119` is sample timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
+	[
+		[
+			1437137708114018208,
+			10
+		],
+		[
+			1437137708114967597,
+			15
+		],
+		[
+			1437137708123781628,
+			16
+		]
+	]
 
-Listing snapshots, sources and metrics
-------------------------------------------
+The first value in the nested list is the timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
 
-In order to list all snapshots:
+The second value is the stored measurement (integer or float).
 
-    $ curl http://localhost:8080/
+Getting started
+---------------
 
-In order to list all sources for given snapshot:
+The latest stable **perfkeeper** binaries are available on the [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-    $ curl http://localhost:8080/mybenchmark
+Just download the file for your platform and and run it in terminal: 
 
-Getting a list of distinct metrics:
+	$ ./perfkeeper 
 
-    $ curl http://localhost:8080/mybenchmark/app1
+	:-:-: perfkeeper :-:-:			serving http://127.0.0.1:8080/
 
-Summary and visualization
--------------------------
+The command above starts HTTP listener on port 8080.
+Folder named "data" will be created in the current working directory by default.
 
-This API returns JSON document with aggregated metrics:
+It possible to specify custom setting using CLI arguments:
 
-    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys/summary
+	$ ./perfkeeper -h
+	Usage of ./perfkeeper:
+	  -address="127.0.0.1:8080": serve requests to this host[:port]
+	  -cpu=false: Enable CPU profiling
+	  -fsync=false: Enable fsync calls after every write operation
+	  -path="data": PerfDB data directory
 
-output:
+There is also sample-docs executable available on the [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-    {
-        "avg": 34.2,
-        "count": 1000,
-        "max": 87.1,
-        "min": 0.1,
-        "p50": 37.3,
-        "p80": 52.4,
-        "p90": 72.5,
-        "p95": 81.7,
-        "p99": 85.2
-    }
+While running perfkeeper in background, execute this program without any arguments:
 
-Built-in heat map graphs in SVG format (use your browser to view):
+	$ ./sample-docs
 
-    http://localhost:8080/mybenchmark/app1/cpu_sys/heatmap
+It will generate 100K random samples. This data set will help to get familiar with the most fundamental API.
 
-![](docs/heatmap.png)
+Reference
+---------
 
-Wait, how to install it?
-------------------------
+Please read the following articles to understand the complexity of times series databases:
 
-The latest stable **perfkeeper** binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+- [Thoughts on Time-series Databases](http://jmoiron.net/blog/thoughts-on-timeseries-databases/) by Jason Moiron
 
-To build the latest development version you need [Go](http://golang.org/doc/install). Getting the latest **perfkeeper**:
-
-    $ go get github.com/pavel-paulau/perfkeeper
-
-Running it:
-
-    $ perfkeeper
-
-The command above will start HTTP listener on port 8080.
+- [Time-Series Database Requirements](http://www.xaprb.com/blog/2014/06/08/time-series-database-requirements/) by Baron Schwartz
