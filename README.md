@@ -36,8 +36,6 @@ Where:
 
    `sample.json` is the JSON document which we described above.
 
-[perfstat](https://github.com/pavel-paulau/perfstat) may simplify stats collection.
-
 Querying samples
 ----------------
 
@@ -95,8 +93,6 @@ Built-in heat map graphs in SVG format (use your browser to view):
     http://localhost:8080/mybenchmark/app1/cpu_sys/heatmap
 
 ![](docs/heatmap.png)
-
-See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advanced report generation system.
 
 Wait, how to install it?
 ------------------------
