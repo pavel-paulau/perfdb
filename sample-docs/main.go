@@ -7,12 +7,8 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-    "os"
 	"runtime"
 	"sync"
-
-    "github.com/alexcesaro/log"
-	"github.com/alexcesaro/log/golog"
 )
 
 type perfDbClient struct {
@@ -46,11 +42,11 @@ func (c *perfDbClient) store(sample map[string]uint64) error {
 	defer resp.Body.Close()
 	ioutil.ReadAll(resp.Body)
 
-    return nil
+	return nil
 }
 
 const (
-	bufferSize = 1e3
+	bufferSize      = 1e3
 	totalNumSamples = 1e5
 )
 
@@ -71,36 +67,50 @@ func randFloat64(numSamples int) <-chan uint64 {
 	return values
 }
 
-func runWorkload(numSamples int, client *perfDbClient, wg *sync.WaitGroup) {
+func runWorkload(numSamples int, client *perfDbClient, errc chan error, wg *sync.WaitGroup) {
 	for value := range randFloat64(numSamples) {
 		sample := map[string]uint64{"metric": value}
 		if err := client.store(sample); err != nil {
-            logger.Critical(err)
-            break
-        }
+			errc <- err
+			break
+		}
 	}
 	wg.Done()
 }
 
-var logger *golog.Logger
+const guidance = `Please check out the summary:
+    http://127.0.0.1:8080/snapshot/source/metric/summary
+
+Histogram:
+    http://127.0.0.1:8080/snapshot/source/metric/histo
+
+And heatmap graph:
+    http://127.0.0.1:8080/snapshot/source/metric/heatmap
+`
 
 func init() {
-    logger = golog.New(os.Stdout, log.Info)
+	fmt.Println("\nLoading sample data set. It will take a while...\n")
 }
 
 func main() {
 	numWorkers := 2 * runtime.NumCPU()
-    numSamples := totalNumSamples / numWorkers
+	numSamples := totalNumSamples / numWorkers
 	client := newPerfDbClient("127.0.0.1:8080", "snapshot", "source")
 
-    logger.Info("Loading sample data set. It will take a while...")
+	errc := make(chan error, numWorkers)
+	defer close(errc)
 
 	wg := sync.WaitGroup{}
 	for worker := 0; worker < numWorkers; worker++ {
 		wg.Add(1)
-		go runWorkload(numSamples, client, &wg)
+		go runWorkload(numSamples, client, errc, &wg)
 	}
 	wg.Wait()
 
-    logger.Info("Done loading data")
+	select {
+	case err := <-errc:
+		fmt.Println(err)
+	default:
+		fmt.Println(guidance)
+	}
 }
