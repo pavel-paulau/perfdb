@@ -13,8 +13,6 @@ There are many beautiful systems like [cube](https://github.com/square/cube). Un
 
 It's built on top of very fast components. All samples are automatically indexed and queries are nearly instantaneous. Interaction with storage is implemented via simple REST API. There are asynchronous and fully concurrent handlers behind every endpoint, so that your requests will never wait.
 
-Deployment is straightforward as well. It only requires running database (TokuMX, as for the moment of writing).
-
 Storing samples
 ---------------
 
@@ -103,9 +101,9 @@ See also [perfreports](https://github.com/pavel-paulau/perfreports) - an advance
 Wait, how to install it?
 ------------------------
 
-First, you need [TokuMX](http://www.tokutek.com/products/tokumx-for-mongodb/). The latest stable **perfkeeper** binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+The latest stable **perfkeeper** binaries are available on [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-To build the latest development version you need [Go](http://golang.org/doc/install) and [Bazaar](http://bazaar.canonical.com/). Getting the latest **perfkeeper**:
+To build the latest development version you need [Go](http://golang.org/doc/install). Getting the latest **perfkeeper**:
 
     $ go get github.com/pavel-paulau/perfkeeper
 
@@ -114,9 +112,3 @@ Running it:
     $ perfkeeper
 
 The command above will start HTTP listener on port 8080.
-
-Usage tips
-----------
-
-* The maximum supported number of samples per metric is ~2B.
-* It makes sense to bump up "open files limit" before intensive usage (via `ulimit -n`).
