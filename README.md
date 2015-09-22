@@ -151,7 +151,7 @@ Getting started
 
 The latest stable **perfkeeper** binaries are available on the [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
 
-Just download the file for your platform and and run it in terminal: 
+Just download the file for your platform and run it in terminal: 
 
 	$ ./perfkeeper 
 
