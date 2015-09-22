@@ -9,8 +9,8 @@ Why?
 ----
 
 Yes, this is [yet](https://github.com/dustin/seriesly) [another](http://influxdb.com/) [time series](https://github.com/prometheus/prometheus) [database](https://github.com/Preetam/catena) written in Go.
-There are many other beautiful non-Go implementations like [cube](https://github.com/square/cube), [KairosDB](https://github.com/kairosdb/kairosdb) or [OpenTSDB](http://opentsdb.net/).
-Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements.
+There are also many other beautiful non-Go implementations like [cube](https://github.com/square/cube), [KairosDB](https://github.com/kairosdb/kairosdb) or [OpenTSDB](http://opentsdb.net/).
+Unfortunately, most of them are designed for continuous monitoring and essentially implement different requirements.
 Also many databases are overly complicated or have tons of dependencies.
 
 **perfdb** was created to address daily needs of performance benchmarking.
@@ -63,7 +63,7 @@ This API returns JSON document with aggregated characteristics (mean, percentile
 		"p99.9": 76
 	}
 
-Please notice that Python is used for demonstration purpose only.
+Please note that Python is used for demonstration purpose only.
 
 **perfdb** provides class-based histograms as well:
 
