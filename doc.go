@@ -1,83 +1,122 @@
 /*
-Fast, flexible and reliable storage for performance measurements.
+A time series database optimized for performance measurements.
 
 Storing samples
 
-Let's say you collect CPU stats every 5 seconds, each sample is represented by a JSON object or document:
+Let's say you measure application latency several times per second.
+Each sample is a JSON document:
 
-    {
-        "cpu_sys": 12.3,
-        "cpu_user": 50.4,
-        "cpu_idle": 37.3
-    }
+	{
+		"read_latency": 12.3
+	}
 
-You can persist your measurements by sending the following HTTP request:
+To persist measurements, send the following HTTP request:
 
-    $ curl -XPOST http://localhost:8080/mybenchmark/app1 -d @sample.json
+	curl -X POST http://localhost:8080/snapshot/source -d '{"read_latency":12.3}'
 
-Where:
+where:
 
-"mybenchmark" is a common snapshot entity (time series database). You should change it before *any* test or benchmark iteration.
+"snapshot" is a common snapshot entity (time series database name). It's recommended to create a separate snapshot for each benchmark.
 
-"app1" is a source name. In this case we are using application name, it can be an IP address (e.g., "172.23.100.96") or name of database (e.g., "mydatabase@127.0.0.1").
+"source" is a source name. It can be application name, IP address (e.g., "172.23.100.96"), database name (e.g., "mysql"), and etc.
 
-"sample.json" is the JSON document which we described above.
+Obviously, you will rather use your favourite programming language to send HTTP requests.
 
-User-specified timestamps:
+It's absolutely OK to create thousands of snapshots and sources.
 
-    $ curl -XPOST http://localhost:8080/mybenchmark/app1 -d @sample.json
+Aggregation and visualization
+
+This API returns JSON document with aggregated characteristics (mean, percentiles, and etc.):
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/summary | python -m json.tool
+	{
+		"avg": 5.82248,
+		"count": 200000,
+		"max": 100,
+		"min": 0,
+		"p50": 3,
+		"p80": 9,
+		"p90": 14,
+		"p95": 21,
+		"p99": 40,
+		"p99.9": 76
+	}
+
+Please notice that Python is used for demonstration purpose only.
+
+perfdb provides class-based histograms as well:
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/histo | python -m json.tool
+	{
+		"0.000000 - 6.666667": 71.57979797971558,
+		"6.666667 - 13.333333": 18.206060606073383
+		"13.333333 - 20.000000": 5.3737373737363505,
+		"20.000000 - 26.666667": 2.9090909090906827,
+		"26.666667 - 33.333333": 1.2848484848484691,
+		"33.333333 - 40.000000": 0.6464646464646343,
+	}
+
+The output is a set of frequencies (from 0 to 100%) for different ranges of values.
+
+Finally, it is possible to generate heat map graphs in SVG format (use your browser to view):
+
+	http://127.0.0.1:8080/snapshot/source/metric/heatmap
+
+Each rectangle is a cluster of values. The darker color corresponds to the denser population. The legend on the right side of the graph (the vertical bar) should help to understand the density.
+
+Browsing data
+
+As mentioned above, all samples are grouped by data source (e.g., OS stats or database metrics). In turn, sources are grouped within snapshot (database instance).
+
+To list all available snapshots, use the following request:
+
+	$ curl -s http://127.0.0.1:8080/ | python -m json.tool
+	[
+		"snapshot"
+	]
+
+To list all sources in specified snapshot, use request similar to:
+
+	$ curl -s http://127.0.0.1:8080/snapshot | python -m json.tool
+	[
+		"source"
+	]
+
+To list all metrics, use request similar to:
+
+	$ curl -s http://127.0.0.1:8080/snapshot/source | python -m json.tool
+	[
+		"read_latency",
+		"write_latency"
+	]
 
 Querying samples
 
-It cannot be simpler:
+Only bulk queries are supported, but even they are not recommended.
 
-    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys
+To get the list of samples, use request similar to:
 
-Output is a JSON document as well:
+	$ curl -s http://127.0.0.1:8080/snapshot/source/metric | python -m json.tool
 
-    {
-        "1403736306507708119": 12.3,
-        "1403736306629829527": 71.4
-    }
+Output is a JSON document with all timestamps and values:
 
-where `1403736306507708119` is sample timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
+	[
+		[
+			1437137708114018208,
+			10
+		],
+		[
+			1437137708114967597,
+			15
+		],
+		[
+			1437137708123781628,
+			16
+		]
+	]
 
-Listing snapshots sources and metrics
+The first value in the nested list is the timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
 
-In order to list all snapshots:
-
-    $ curl http://localhost:8080/
-
-In order to list all sources for given snapshot:
-
-    $ curl http://localhost:8080/mybenchmark
-
-Getting a list of distinct metrics:
-
-    $ curl http://localhost:8080/mybenchmark/app1
-
-Summary and visualization
-
-This API returns JSON document with aggregated metrics:
-
-    $ curl http://localhost:8080/mybenchmark/app1/cpu_sys/summary
-
-output:
-
-    {
-        "avg": 34.2,
-        "count": 1000,
-        "max": 87.1,
-        "min": 0.1,
-        "p50": 37.3,
-        "p80": 52.4,
-        "p90": 72.5,
-        "p95": 81.7,
-        "p99": 85.2
-    }
-
-Built-in visualization using amazing D3 charts:
-
-    $ http://localhost:8080/mybenchmark/app1/cpu_sys/linechart
+The second value is the stored measurement (integer or float).
 */
 package main
