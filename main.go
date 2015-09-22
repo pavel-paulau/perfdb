@@ -61,7 +61,7 @@ func main() {
 	http.Handle("/", newRouter(controller))
 
 	// Banner and launcher
-	banner := fmt.Sprintf("\n\t:-:-: perfkeeper :-:-:\t\t\tserving http://%s/\n", *address)
+	banner := fmt.Sprintf("\n\t:-:-: perfdb :-:-:\t\t\tserving http://%s/\n", *address)
 	fmt.Println(banner)
 	logger.Critical(http.ListenAndServe(*address, requestLog(http.DefaultServeMux)))
 }

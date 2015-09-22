@@ -1,9 +1,9 @@
-perfkeeper
+perfdb
 ==========
 
-[![Build Status](https://travis-ci.org/pavel-paulau/perfkeeper.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfkeeper) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfkeeper.svg)](https://coveralls.io/r/pavel-paulau/perfkeeper) [![GoDoc](https://godoc.org/github.com/pavel-paulau/perfkeeper?status.svg)](https://godoc.org/github.com/pavel-paulau/perfkeeper)
+[![Build Status](https://travis-ci.org/pavel-paulau/perfdb.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfdb) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfdb.svg)](https://coveralls.io/r/pavel-paulau/perfdb) [![GoDoc](https://godoc.org/github.com/pavel-paulau/perfdb?status.svg)](https://godoc.org/github.com/pavel-paulau/perfdb)
 
-**perfkeeper** is a time series database optimized for performance measurements.
+**perfdb** is a time series database optimized for performance measurements.
 
 Why?
 ----
@@ -13,12 +13,12 @@ There are many other beautiful non-Go implementations like [cube](https://github
 Unfortunately most of them were designed for continuous monitoring and essentially implement different requirements.
 Also many databases are overly complicated or have tons of dependencies.
 
-**perfkeeper** was created to address daily needs of performance benchmarking.
+**perfdb** was created to address daily needs of performance benchmarking.
 The storage was implemented so that one can accurately aggregate and visualize millions of samples.
 
 It's not aimed to support flexible queries. But it produces nice SVG graphs and helps to explore data via convenient REST API.
 
-The last but not least, **perfkeeper** is distributed as a single binary file with literally zero external dependencies.
+The last but not least, **perfdb** is distributed as a single binary file with literally zero external dependencies.
 
 Storing samples
 ---------------
@@ -65,7 +65,7 @@ This API returns JSON document with aggregated characteristics (mean, percentile
 
 Please notice that Python is used for demonstration purpose only.
 
-**perfkeeper** provides class-based histograms as well:
+**perfdb** provides class-based histograms as well:
 
 	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/histo | python -m json.tool
 	{
@@ -149,29 +149,29 @@ The second value is the stored measurement (integer or float).
 Getting started
 ---------------
 
-The latest stable **perfkeeper** binaries are available on the [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+The latest stable **perfdb** binaries are available on the [Releases](https://github.com/pavel-paulau/perfdb/releases) page.
 
 Just download the file for your platform and run it in terminal: 
 
-	$ ./perfkeeper 
+	$ ./perfdb 
 
-	:-:-: perfkeeper :-:-:			serving http://127.0.0.1:8080/
+	:-:-: perfdb :-:-:			serving http://127.0.0.1:8080/
 
 The command above starts HTTP listener on port 8080.
 Folder named "data" will be created in the current working directory by default.
 
 It possible to specify custom setting using CLI arguments:
 
-	$ ./perfkeeper -h
-	Usage of ./perfkeeper:
+	$ ./perfdb -h
+	Usage of ./perfdb:
 	  -address="127.0.0.1:8080": serve requests to this host[:port]
 	  -cpu=false: Enable CPU profiling
 	  -fsync=false: Enable fsync calls after every write operation
 	  -path="data": PerfDB data directory
 
-There is also sample-docs executable available on the [Releases](https://github.com/pavel-paulau/perfkeeper/releases) page.
+There is also sample-docs executable available on the [Releases](https://github.com/pavel-paulau/perfdb/releases) page.
 
-While running perfkeeper in background, execute this program without any arguments:
+While running perfdb in background, execute this program without any arguments:
 
 	$ ./sample-docs
 

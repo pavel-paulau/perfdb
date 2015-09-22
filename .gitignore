@@ -21,7 +21,7 @@ _testmain.go
 
 *.exe
 *.test
-perfkeeper
+perfdb
 sample-docs/sample-docs
 data
 

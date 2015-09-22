@@ -4,7 +4,7 @@ build:
 	go build -race -v
 
 clean:
-	rm -f perfkeeper sample-docs/sample-docs
+	rm -f perfdb sample-docs/sample-docs
 
 data:
 	go build -race -v -o sample-docs/sample-docs ./sample-docs
