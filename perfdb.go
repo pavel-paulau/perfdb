@@ -251,9 +251,12 @@ func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]int
 	}
 
 	for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99, 0.999} {
-		pInt := int(float64(count)*percentile) - 1
+		var pIdx int
+        if count > 1 {
+            pIdx = int(float64(count)*percentile) - 1
+        }
 		p := fmt.Sprintf("p%v", percentile*100)
-		summary[p] = values[pInt]
+		summary[p] = values[pIdx]
 	}
 
 	pdb.cache.Set(hash, summary, cache.NoExpiration)
