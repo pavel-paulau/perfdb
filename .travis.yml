@@ -1,6 +1,6 @@
 language: go
 go:
-  - tip
+  - 1.5
 install:
   - go get github.com/ajstarks/svgo
   - go get github.com/alexcesaro/log
