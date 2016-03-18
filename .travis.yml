@@ -2,6 +2,7 @@ sudo: false
 language: go
 go:
   - 1.5
+  - 1.6
 install:
   - go get github.com/ajstarks/svgo
   - go get github.com/alexcesaro/log
