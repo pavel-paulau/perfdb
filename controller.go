@@ -9,20 +9,15 @@ import (
 )
 
 type Controller struct {
-	storage Storage
+	storage *perfDB
 }
 
-func newController(storage Storage) *Controller {
+func newController(storage *perfDB) *Controller {
 	return &Controller{storage}
 }
 
-func newConn(rw http.ResponseWriter, r *http.Request) (API, error) {
-	var conn API
-	if values := r.Header["Sec-Websocket-Version"]; len(values) == 0 {
-		conn = &restHanlder{rw, r}
-	} else {
-		conn = &wsHandler{rw, r, nil}
-	}
+func newConn(rw http.ResponseWriter, r *http.Request) (*restHanlder, error) {
+	conn := &restHanlder{rw, r}
 	err := conn.open()
 	return conn, err
 }

@@ -18,6 +18,11 @@ const (
 	dataFileExt = ".data"
 )
 
+type Sample struct {
+	ts int64
+	v  float64
+}
+
 type perfDB struct {
 	baseDir string
 	cache   cache.Cache
@@ -252,9 +257,9 @@ func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]int
 
 	for _, percentile := range []float64{0.5, 0.8, 0.9, 0.95, 0.99, 0.999} {
 		var pIdx int
-        if count > 1 {
-            pIdx = int(float64(count)*percentile) - 1
-        }
+		if count > 1 {
+			pIdx = int(float64(count)*percentile) - 1
+		}
 		p := fmt.Sprintf("p%v", percentile*100)
 		summary[p] = values[pIdx]
 	}
