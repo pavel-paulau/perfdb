@@ -1,19 +1,10 @@
 sudo: false
 language: go
 go:
-  - 1.5
   - 1.6
 install:
-  - go get github.com/ajstarks/svgo
-  - go get github.com/alexcesaro/log
-  - go get github.com/axw/gocov/gocov
-  - go get github.com/davecheney/profile
-  - go get github.com/gorilla/mux
-  - go get github.com/gorilla/websocket
+  - go get github.com/kardianos/govendor
   - go get github.com/mattn/goveralls
-  - go get github.com/pmylund/go-cache
-  - go get github.com/stretchr/testify/assert
-  - go get github.com/stretchr/testify/mock
-  - go get golang.org/x/tools/cmd/cover
+  - $HOME/gopath/bin/govendor sync
 script:
   - $HOME/gopath/bin/goveralls -v -repotoken $COVERALLS_TOKEN
