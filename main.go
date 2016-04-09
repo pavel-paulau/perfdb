@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	logger        *golog.Logger
-	cpu, fsync    *bool
-	address, path *string
+	logger        	*golog.Logger
+	cpu           	*bool
+	address, path	*string
 )
 
 func requestLog(handler http.Handler) http.Handler {
@@ -31,7 +31,6 @@ func init() {
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
 	path = flag.String("path", "data", "PerfDB data directory")
 	cpu = flag.Bool("cpu", false, "Enable CPU profiling")
-	fsync = flag.Bool("fsync", false, "Enable fsync calls after every write operation")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
@@ -50,7 +49,7 @@ func main() {
 	// Database handler
 	var err error
 	var storage *perfDB
-	if storage, err = newPerfDB(*path, *fsync); err != nil {
+	if storage, err = newPerfDB(*path); err != nil {
 		os.Exit(1)
 	}
 

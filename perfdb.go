@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/pmylund/go-cache"
 )
@@ -26,16 +27,16 @@ type Sample struct {
 type perfDB struct {
 	baseDir string
 	cache   cache.Cache
-	fsync   bool
+	mu	sync.Mutex
 }
 
-func newPerfDB(baseDir string, fsync bool) (*perfDB, error) {
+func newPerfDB(baseDir string) (*perfDB, error) {
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		logger.Critical("Failed to initalize datastore: %s", err)
 		return nil, err
 	}
 	c := cache.New(cache.NoExpiration, cache.NoExpiration)
-	return &perfDB{baseDir, *c, fsync}, nil
+	return &perfDB{baseDir, *c, sync.Mutex{}}, nil
 }
 
 func (pdb *perfDB) listDatabases() ([]string, error) {
@@ -94,16 +95,11 @@ func (pdb *perfDB) addSample(dbname, collection, metric string, sample Sample) e
 	}
 	defer file.Close()
 
+	pdb.mu.Lock()
+	defer pdb.mu.Unlock()
 	if _, err := fmt.Fprintf(file, "%22d %025.12f\n", sample.ts, sample.v); err != nil {
 		logger.Critical(err)
 		return err
-	}
-
-	if pdb.fsync {
-		if err := file.Sync(); err != nil {
-			logger.Critical(err)
-			return err
-		}
 	}
 
 	return nil

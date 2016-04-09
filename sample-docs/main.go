@@ -93,7 +93,7 @@ func init() {
 }
 
 func main() {
-	numWorkers := 2 * runtime.NumCPU()
+	numWorkers := runtime.NumCPU()
 	numSamples := totalNumSamples / numWorkers
 	client := newPerfDbClient("127.0.0.1:8080", "snapshot", "source")
 
