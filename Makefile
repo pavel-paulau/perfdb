@@ -4,7 +4,7 @@ build:
 	go build -v
 
 clean:
-	rm -f perfdb sample-docs/sample-docs
+	rm -fr perfdb sample-docs/sample-docs data
 
 data:
 	go build -v -o sample-docs/sample-docs ./sample-docs
