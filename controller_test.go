@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// PerfDB Unit Tests
-
 func removeStorage(pdb *perfDB) {
 	os.RemoveAll(pdb.baseDir)
 }
@@ -28,7 +26,7 @@ func newTmpStorage() (*perfDB, error) {
 	}
 
 	var storage *perfDB
-	if storage, err = newPerfDB(tmpDir, true); err != nil {
+	if storage, err = newPerfDB(tmpDir); err != nil {
 		return nil, err
 	}
 	runtime.SetFinalizer(storage, removeStorage)
@@ -37,7 +35,7 @@ func newTmpStorage() (*perfDB, error) {
 
 func TestListDatabasesPerfDb(t *testing.T) {
 	var err error
-	var storage Storage
+	var storage *perfDB
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +52,7 @@ func TestListDatabasesPerfDb(t *testing.T) {
 
 func TestAddSamplePerfDb(t *testing.T) {
 	var err error
-	var storage Storage
+	var storage *perfDB
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +71,7 @@ func TestAddSamplePerfDb(t *testing.T) {
 
 func TestListSourcesPerfDb(t *testing.T) {
 	var err error
-	var storage Storage
+	var storage *perfDB
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +94,7 @@ func TestListSourcesPerfDb(t *testing.T) {
 
 func TestListMetricsPerfDb(t *testing.T) {
 	var err error
-	var storage Storage
+	var storage *perfDB
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +117,7 @@ func TestListMetricsPerfDb(t *testing.T) {
 
 func TestGetRawValuesPerfDb(t *testing.T) {
 	var err error
-	var storage Storage
+	var storage *perfDB
 	if storage, err = newTmpStorage(); err != nil {
 		t.Fatal(err)
 	}
