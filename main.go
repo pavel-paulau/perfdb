@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	logger        	*golog.Logger
-	cpu           	*bool
-	address, path	*string
+	logger        *golog.Logger
+	cpu           *bool
+	address, path *string
 )
 
 func requestLog(handler http.Handler) http.Handler {

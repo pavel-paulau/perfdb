@@ -129,11 +129,11 @@ func drawGrid(canvas *svg.SVG, chartInnerSize size, chartMargin margin) {
 
 func drawHeatBar(canvas *svg.SVG, chartInnerSize, chartOuterSize, heatBarInnerSize size, chartMargin, heatBarMargin margin, hm *heatMap) {
 	var heatBarColor = []svg.Offcolor{
-		svg.Offcolor{0, "#7F2704", 1.0},
-		svg.Offcolor{25, "#D74701", 1.0},
-		svg.Offcolor{50, "#FC8C3B", 1.0},
-		svg.Offcolor{75, "#FDCFA1", 1.0},
-		svg.Offcolor{100, "#FFFFFF", 1.0},
+		{0, "#7F2704", 1.0},
+		{25, "#D74701", 1.0},
+		{50, "#FC8C3B", 1.0},
+		{75, "#FDCFA1", 1.0},
+		{100, "#FFFFFF", 1.0},
 	}
 	canvas.LinearGradient("heatBar", 0, 0, 0, 100, heatBarColor)
 

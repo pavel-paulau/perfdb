@@ -27,7 +27,7 @@ type Sample struct {
 type perfDB struct {
 	baseDir string
 	cache   cache.Cache
-	mu	sync.Mutex
+	mu      sync.Mutex
 }
 
 func newPerfDB(baseDir string) (*perfDB, error) {
