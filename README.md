@@ -2,6 +2,7 @@ perfdb
 ==========
 
 [![Build Status](https://travis-ci.org/pavel-paulau/perfdb.svg?branch=master)](https://travis-ci.org/pavel-paulau/perfdb) [![Coverage Status](https://img.shields.io/coveralls/pavel-paulau/perfdb.svg)](https://coveralls.io/r/pavel-paulau/perfdb) [![GoDoc](https://godoc.org/github.com/pavel-paulau/perfdb?status.svg)](https://godoc.org/github.com/pavel-paulau/perfdb)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pavel-paulau/perfdb)](https://goreportcard.com/report/github.com/pavel-paulau/perfdb)
 
 **perfdb** is a time series database optimized for performance measurements.
 
