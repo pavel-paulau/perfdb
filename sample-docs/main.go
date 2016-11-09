@@ -89,7 +89,7 @@ And heatmap graph:
 `
 
 func init() {
-	fmt.Println("\nLoading sample data set. It will take a while...\n")
+	fmt.Print("\nLoading sample data set. It will take a while...\n\n")
 }
 
 func main() {
