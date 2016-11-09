@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"runtime"
 
 	"github.com/alexcesaro/log"
 	"github.com/alexcesaro/log/golog"
@@ -24,8 +23,6 @@ func requestLog(handler http.Handler) http.Handler {
 }
 
 func init() {
-	runtime.GOMAXPROCS(2)
-
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
 	path = flag.String("path", "data", "PerfDB data directory")
 	flag.Parse()
