@@ -10,5 +10,8 @@ data:
 	go build -v -o sample-docs/sample-docs ./sample-docs
 	./sample-docs/sample-docs
 
+fmt:
+	gofmt -w -s *.go
+
 test:
 	go test -cover -race -v
