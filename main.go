@@ -9,12 +9,10 @@ import (
 
 	"github.com/alexcesaro/log"
 	"github.com/alexcesaro/log/golog"
-	"github.com/davecheney/profile"
 )
 
 var (
 	logger        *golog.Logger
-	cpu           *bool
 	address, path *string
 )
 
@@ -30,22 +28,12 @@ func init() {
 
 	address = flag.String("address", "127.0.0.1:8080", "serve requests to this host[:port]")
 	path = flag.String("path", "data", "PerfDB data directory")
-	cpu = flag.Bool("cpu", false, "Enable CPU profiling")
 	flag.Parse()
 
 	logger = golog.New(os.Stdout, log.Info)
 }
 
 func main() {
-	// Optionally enable CPU profiling
-	if *cpu {
-		cfg := profile.Config{
-			ProfilePath: ".",
-			CPUProfile:  true,
-		}
-		defer profile.Start(&cfg).Stop()
-	}
-
 	// Database handler
 	var err error
 	var storage *perfDB

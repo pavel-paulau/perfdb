@@ -166,7 +166,6 @@ It possible to specify custom setting using CLI arguments:
 	$ ./perfdb -h
 	Usage of ./perfdb:
 	  -address="127.0.0.1:8080": serve requests to this host[:port]
-	  -cpu=false: Enable CPU profiling
 	  -fsync=false: Enable fsync calls after every write operation
 	  -path="data": PerfDB data directory
 
