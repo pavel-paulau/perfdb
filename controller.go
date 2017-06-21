@@ -55,30 +55,9 @@ func (c *Controller) checkDbExists(dbname string) error {
 	return nil
 }
 
-func (c *Controller) listSources(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-
-	conn, err := newConn(rw, r)
-
-	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
-		conn.writeError(err, 404)
-		return
-	}
-	sources, err := c.storage.listSources(dbname)
-	if err != nil {
-		logger.Critical(err)
-		conn.writeError(err, 500)
-		return
-	}
-	conn.writeJSON(sources)
-}
-
 func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 
 	conn, err := newConn(rw, r)
 
@@ -88,7 +67,7 @@ func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metrics, err := c.storage.listMetrics(dbname, source)
+	metrics, err := c.storage.listMetrics(dbname)
 	if err != nil {
 		logger.Critical(err)
 		conn.writeError(err, 500)
@@ -100,7 +79,6 @@ func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
@@ -111,7 +89,7 @@ func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values, err := c.storage.getRawValues(dbname, source, metric)
+	values, err := c.storage.getRawValues(dbname, metric)
 	if err != nil {
 		logger.Critical(err)
 		conn.writeError(err, 500)
@@ -123,7 +101,6 @@ func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
@@ -134,7 +111,7 @@ func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values, err := c.storage.getSummary(dbname, source, metric)
+	values, err := c.storage.getSummary(dbname, metric)
 	if err != nil {
 		logger.Critical(err)
 		conn.writeError(err, 500)
@@ -153,7 +130,6 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 
 	conn, err := newConn(rw, r)
 
@@ -167,7 +143,7 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	go func() {
 		for metric, value := range samples.(map[string]interface{}) {
 			sample := Sample{tsNano, value.(float64)}
-			c.storage.addSample(dbname, source, metric, sample)
+			c.storage.addSample(dbname, metric, sample)
 		}
 	}()
 
@@ -177,7 +153,6 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
@@ -188,7 +163,7 @@ func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hm, err := c.storage.getHeatMap(dbname, source, metric)
+	hm, err := c.storage.getHeatMap(dbname, metric)
 	if err != nil {
 		logger.Critical(err)
 		conn.writeError(err, 500)
@@ -200,7 +175,6 @@ func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
 func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
@@ -211,7 +185,7 @@ func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	values, err := c.storage.getHistogram(dbname, source, metric)
+	values, err := c.storage.getHistogram(dbname, metric)
 	if err != nil {
 		logger.Critical(err)
 		conn.writeError(err, 500)
@@ -223,7 +197,6 @@ func (c *Controller) getHistogram(rw http.ResponseWriter, r *http.Request) {
 func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
-	source := vars["source"]
 	metric := vars["metric"]
 
 	var title string
@@ -238,7 +211,7 @@ func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hm, err := c.storage.getHeatMap(dbname, source, metric)
+	hm, err := c.storage.getHeatMap(dbname, metric)
 	if err != nil {
 		logger.Critical(err)
 		return

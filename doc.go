@@ -12,23 +12,21 @@ Each sample is a JSON document:
 
 To persist measurements, send the following HTTP request:
 
-	curl -X POST http://localhost:8080/snapshot/source -d '{"read_latency":12.3}'
+	curl -X POST http://localhost:8080/mydatabase -d '{"read_latency":12.3}'
 
 where:
 
-"snapshot" is a common snapshot entity (time series database name). It's recommended to create a separate snapshot for each benchmark.
-
-"source" is a source name. It can be application name, IP address (e.g., "172.23.100.96"), database name (e.g., "mysql"), and etc.
+  `mydatabase` is time series database name. It's recommended to create a separate database for each benchmark.
 
 Obviously, you will rather use your favourite programming language to send HTTP requests.
 
-It's absolutely OK to create thousands of snapshots and sources.
+It's absolutely OK to create thousands of databases.
 
 Aggregation and visualization
 
 This API returns JSON document with aggregated characteristics (mean, percentiles, and etc.):
 
-	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/summary | python -m json.tool
+	$ curl -s http://127.0.0.1:8080/mydatabase/read_latency/summary | python -m json.tool
 	{
 		"avg": 5.82248,
 		"count": 200000,
@@ -46,7 +44,7 @@ Please notice that Python is used for demonstration purpose only.
 
 perfdb provides class-based histograms as well:
 
-	$ curl -s http://127.0.0.1:8080/snapshot/source/metric/histo | python -m json.tool
+	$ curl -s http://127.0.0.1:8080/mydatabase/read_latency/histo | python -m json.tool
 	{
 		"0.000000 - 6.666667": 71.57979797971558,
 		"6.666667 - 13.333333": 18.206060606073383
@@ -60,31 +58,22 @@ The output is a set of frequencies (from 0 to 100%) for different ranges of valu
 
 Finally, it is possible to generate heat map graphs in SVG format (use your browser to view):
 
-	http://127.0.0.1:8080/snapshot/source/metric/heatmap
+	http://127.0.0.1:8080/mydatabase/read_latency/heatmap
 
 Each rectangle is a cluster of values. The darker color corresponds to the denser population. The legend on the right side of the graph (the vertical bar) should help to understand the density.
 
 Browsing data
 
-As mentioned above, all samples are grouped by data source (e.g., OS stats or database metrics). In turn, sources are grouped within snapshot (database instance).
-
-To list all available snapshots, use the following request:
+To list all available database, use the following request:
 
 	$ curl -s http://127.0.0.1:8080/ | python -m json.tool
 	[
-		"snapshot"
-	]
-
-To list all sources in specified snapshot, use request similar to:
-
-	$ curl -s http://127.0.0.1:8080/snapshot | python -m json.tool
-	[
-		"source"
+		"mydatabase"
 	]
 
 To list all metrics, use request similar to:
 
-	$ curl -s http://127.0.0.1:8080/snapshot/source | python -m json.tool
+	$ curl -s http://127.0.0.1:8080/mydatabase | python -m json.tool
 	[
 		"read_latency",
 		"write_latency"
@@ -96,7 +85,7 @@ Only bulk queries are supported, but even they are not recommended.
 
 To get the list of samples, use request similar to:
 
-	$ curl -s http://127.0.0.1:8080/snapshot/source/metric | python -m json.tool
+	$ curl -s http://127.0.0.1:8080/mydatabase/read_latency | python -m json.tool
 
 Output is a JSON document with all timestamps and values:
 

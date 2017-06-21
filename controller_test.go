@@ -59,7 +59,7 @@ func TestAddSamplePerfDb(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/snapshot/source?ts=1411940889515410774",
+	req, _ := http.NewRequest("POST", "/database?ts=1411940889515410774",
 		bytes.NewBufferString("{\"cpu\":99.0}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
@@ -67,29 +67,6 @@ func TestAddSamplePerfDb(t *testing.T) {
 
 	assert.Equal(t, 200, rw.Code)
 	assert.Equal(t, "{\"status\":\"ok\"}", rw.Body.String())
-}
-
-func TestListSourcesPerfDb(t *testing.T) {
-	var err error
-	var storage *perfDB
-	if storage, err = newTmpStorage(); err != nil {
-		t.Fatal(err)
-	}
-
-	controller := newController(storage)
-
-	req, _ := http.NewRequest("POST", "/snapshot/source",
-		bytes.NewBufferString("{\"cpu\":99.0}"))
-	rw := httptest.NewRecorder()
-	newRouter(controller).ServeHTTP(rw, req)
-	time.Sleep(10 * time.Millisecond) // Goroutine
-
-	req, _ = http.NewRequest("GET", "/snapshot", nil)
-	rw = httptest.NewRecorder()
-	newRouter(controller).ServeHTTP(rw, req)
-
-	assert.Equal(t, 200, rw.Code)
-	assert.Equal(t, "[\"source\"]", rw.Body.String())
 }
 
 func TestListMetricsPerfDb(t *testing.T) {
@@ -101,13 +78,13 @@ func TestListMetricsPerfDb(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/snapshot/source",
+	req, _ := http.NewRequest("POST", "/database",
 		bytes.NewBufferString("{\"cpu\":99.0}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 	time.Sleep(10 * time.Millisecond) // Goroutine
 
-	req, _ = http.NewRequest("GET", "/snapshot/source", nil)
+	req, _ = http.NewRequest("GET", "/database", nil)
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
@@ -124,19 +101,19 @@ func TestGetRawValuesPerfDb(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/snapshot/source?ts=1411940889515410774",
+	req, _ := http.NewRequest("POST", "/database?ts=1411940889515410774",
 		bytes.NewBufferString("{\"cpu\":1005}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 	time.Sleep(10 * time.Millisecond) // Goroutine
 
-	req, _ = http.NewRequest("POST", "/snapshot/source?ts=1411940889515410775",
+	req, _ = http.NewRequest("POST", "/database?ts=1411940889515410775",
 		bytes.NewBufferString("{\"cpu\":75.11}"))
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 	time.Sleep(10 * time.Millisecond) // Goroutine
 
-	req, _ = http.NewRequest("GET", "/snapshot/source/cpu", nil)
+	req, _ = http.NewRequest("GET", "/database/cpu", nil)
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 

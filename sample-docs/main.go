@@ -16,10 +16,10 @@ type perfDbClient struct {
 	uri    string
 }
 
-func newPerfDbClient(host, snapshot, source string) *perfDbClient {
+func newPerfDbClient(host, database string) *perfDbClient {
 	return &perfDbClient{
 		client: &http.Client{},
-		uri:    fmt.Sprintf("http://%s/%s/%s", host, snapshot, source),
+		uri:    fmt.Sprintf("http://%s/%s", host, database),
 	}
 }
 
@@ -69,7 +69,7 @@ func randFloat64(numSamples int) <-chan uint64 {
 
 func runWorkload(numSamples int, client *perfDbClient, errc chan error, wg *sync.WaitGroup) {
 	for value := range randFloat64(numSamples) {
-		sample := map[string]uint64{"metric": value}
+		sample := map[string]uint64{"mymetric": value}
 		if err := client.store(sample); err != nil {
 			errc <- err
 			break
@@ -79,13 +79,13 @@ func runWorkload(numSamples int, client *perfDbClient, errc chan error, wg *sync
 }
 
 const guidance = `Please check out the summary:
-    http://127.0.0.1:8080/snapshot/source/metric/summary
+    http://127.0.0.1:8080/mydatabase/mymetric/summary
 
 Histogram:
-    http://127.0.0.1:8080/snapshot/source/metric/histo
+    http://127.0.0.1:8080/mydatabase/mymetric/histo
 
 And heatmap graph:
-    http://127.0.0.1:8080/snapshot/source/metric/heatmap?label=Metric name, units
+    http://127.0.0.1:8080/mydatabase/mymetric/heatmap?label=Metric name, units
 `
 
 func init() {
@@ -95,7 +95,7 @@ func init() {
 func main() {
 	numWorkers := runtime.NumCPU()
 	numSamples := totalNumSamples / numWorkers
-	client := newPerfDbClient("127.0.0.1:8080", "snapshot", "source")
+	client := newPerfDbClient("127.0.0.1:8080", "mydatabase")
 
 	errc := make(chan error, numWorkers)
 	defer close(errc)

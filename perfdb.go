@@ -51,21 +51,8 @@ func (pdb *perfDB) listDatabases() ([]string, error) {
 	return databases, nil
 }
 
-func (pdb *perfDB) listSources(dbname string) ([]string, error) {
+func (pdb *perfDB) listMetrics(dbname string) ([]string, error) {
 	dataDir := filepath.Join(pdb.baseDir, dbname)
-	files, err := ioutil.ReadDir(dataDir)
-	if err != nil {
-		return nil, err
-	}
-	collections := []string{}
-	for _, f := range files {
-		collections = append(collections, f.Name())
-	}
-	return collections, nil
-}
-
-func (pdb *perfDB) listMetrics(dbname, collection string) ([]string, error) {
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
 	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		return nil, err
@@ -80,8 +67,8 @@ func (pdb *perfDB) listMetrics(dbname, collection string) ([]string, error) {
 
 const tsOffset = 22
 
-func (pdb *perfDB) addSample(dbname, collection, metric string, sample Sample) error {
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
+func (pdb *perfDB) addSample(dbname, metric string, sample Sample) error {
+	dataDir := filepath.Join(pdb.baseDir, dbname)
 	if err := os.MkdirAll(dataDir, 0775); err != nil {
 		return err
 	}
@@ -173,8 +160,8 @@ func mergeErrors(errcs ...<-chan error) error {
 	return nil
 }
 
-func (pdb *perfDB) getRawValues(dbname, collection, metric string) ([][]interface{}, error) {
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
+func (pdb *perfDB) getRawValues(dbname, metric string) ([][]interface{}, error) {
+	dataDir := filepath.Join(pdb.baseDir, dbname)
 	dataFile := filepath.Join(dataDir, metric+dataFileExt)
 
 	done := make(chan struct{}, 1)
@@ -208,10 +195,10 @@ func metricHash(filePath string) (string, error) {
 	return fmt.Sprintf("%s%d", filePath, info.Size()), nil
 }
 
-func (pdb *perfDB) getSummary(dbname, collection, metric string) (map[string]interface{}, error) {
+func (pdb *perfDB) getSummary(dbname, metric string) (map[string]interface{}, error) {
 	var summary map[string]interface{}
 
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
+	dataDir := filepath.Join(pdb.baseDir, dbname)
 	dataFile := filepath.Join(dataDir, metric+dataFileExt)
 
 	hash, err := metricHash(dataFile)
@@ -295,8 +282,8 @@ func parseSamplesWithTimestamp(records <-chan string) (<-chan parsedSample, <-ch
 	return samples, errc
 }
 
-func (pdb *perfDB) getHeatMap(dbname, collection, metric string) (*heatMap, error) {
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
+func (pdb *perfDB) getHeatMap(dbname, metric string) (*heatMap, error) {
+	dataDir := filepath.Join(pdb.baseDir, dbname)
 	dataFile := filepath.Join(dataDir, metric+dataFileExt)
 
 	hm := newHeatMap()
@@ -343,8 +330,8 @@ func (pdb *perfDB) getHeatMap(dbname, collection, metric string) (*heatMap, erro
 
 const numBins = 6
 
-func (pdb *perfDB) getHistogram(dbname, collection, metric string) (map[string]float64, error) {
-	dataDir := filepath.Join(pdb.baseDir, dbname, collection)
+func (pdb *perfDB) getHistogram(dbname, metric string) (map[string]float64, error) {
+	dataDir := filepath.Join(pdb.baseDir, dbname)
 	dataFile := filepath.Join(dataDir, metric+dataFileExt)
 
 	done := make(chan struct{}, 1)
