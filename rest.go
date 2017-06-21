@@ -21,16 +21,16 @@ func (r httpResponse) String() (s string) {
 	return
 }
 
-type restHanlder struct {
+type restHandler struct {
 	rw http.ResponseWriter
 	r  *http.Request
 }
 
-func (rest *restHanlder) open() error {
+func (rest *restHandler) open() error {
 	return nil
 }
 
-func (rest *restHanlder) readJSON() (interface{}, error) {
+func (rest *restHandler) readJSON() (interface{}, error) {
 	var data interface{}
 
 	decoder := json.NewDecoder(rest.r.Body)
@@ -42,7 +42,7 @@ func (rest *restHanlder) readJSON() (interface{}, error) {
 	return data, nil
 }
 
-func (rest *restHanlder) writeError(err error, code int) {
+func (rest *restHandler) writeError(err error, code int) {
 	logger.Critical(err)
 	rest.rw.Header().Set("Content-Type", "application/json")
 	switch code {
@@ -57,7 +57,7 @@ func (rest *restHanlder) writeError(err error, code int) {
 	fmt.Fprint(rest.rw, httpResponse{resp})
 }
 
-func (rest *restHanlder) writeJSON(data interface{}) {
+func (rest *restHandler) writeJSON(data interface{}) {
 	rest.rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(rest.rw, httpResponse{data})
 }

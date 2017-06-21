@@ -32,7 +32,7 @@ type perfDB struct {
 
 func newPerfDB(baseDir string) (*perfDB, error) {
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
-		logger.Critical("Failed to initalize datastore: %s", err)
+		logger.Critical("Failed to initialize datastore: %s", err)
 		return nil, err
 	}
 	c := cache.New(cache.NoExpiration, cache.NoExpiration)

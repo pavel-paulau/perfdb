@@ -16,8 +16,8 @@ func newController(storage *perfDB) *Controller {
 	return &Controller{storage}
 }
 
-func newConn(rw http.ResponseWriter, r *http.Request) (*restHanlder, error) {
-	conn := &restHanlder{rw, r}
+func newConn(rw http.ResponseWriter, r *http.Request) (*restHandler, error) {
+	conn := &restHandler{rw, r}
 	err := conn.open()
 	return conn, err
 }
