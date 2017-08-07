@@ -39,17 +39,12 @@ func (c *Controller) listDatabases(rw http.ResponseWriter, r *http.Request) {
 	conn.writeJSON(databases)
 }
 
-func stringInSlice(a string, array []string) bool {
-	for _, b := range array {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 func (c *Controller) checkDbExists(dbname string) error {
-	if allDbs, err := c.storage.listDatabases(); !stringInSlice(dbname, allDbs) || err != nil {
+	status, err := c.storage.isExist(dbname)
+	if err != nil {
+		return err
+	}
+	if !status {
 		return errors.New("not found")
 	}
 	return nil
