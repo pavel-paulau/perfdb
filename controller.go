@@ -25,13 +25,11 @@ func newConn(rw http.ResponseWriter, r *http.Request) (*restHandler, error) {
 func (c *Controller) listDatabases(rw http.ResponseWriter, r *http.Request) {
 	conn, err := newConn(rw, r)
 	if err != nil {
-		logger.Critical(err)
 		return
 	}
 
 	databases, err := c.storage.listDatabases()
 	if err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 500)
 		return
 	}
@@ -55,16 +53,17 @@ func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 
 	conn, err := newConn(rw, r)
+	if err != nil {
+		return
+	}
 
 	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 404)
 		return
 	}
 
 	metrics, err := c.storage.listMetrics(dbname)
 	if err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 500)
 		return
 	}
@@ -77,16 +76,17 @@ func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
+	if err != nil {
+		return
+	}
 
 	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 404)
 		return
 	}
 
 	values, err := c.storage.getRawValues(dbname, metric)
 	if err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 500)
 		return
 	}
@@ -99,16 +99,17 @@ func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
 	metric := vars["metric"]
 
 	conn, err := newConn(rw, r)
+	if err != nil {
+		return
+	}
 
 	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 404)
 		return
 	}
 
 	values, err := c.storage.getSummary(dbname, metric)
 	if err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 500)
 		return
 	}
@@ -127,10 +128,12 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 
 	conn, err := newConn(rw, r)
+	if err != nil {
+		return
+	}
 
 	samples, err := conn.readJSON()
 	if err != nil {
-		logger.Critical(err)
 		conn.writeError(err, 400)
 		return
 	}
@@ -151,22 +154,27 @@ func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
 	dbname := vars["db"]
 	metric := vars["metric"]
 
-	var title string
-	if titles, ok := r.URL.Query()["label"]; ok {
-		title = titles[0]
-	} else {
-		title = metric
+	conn, err := newConn(rw, r)
+	if err != nil {
+		return
 	}
 
 	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
+		conn.writeError(err, 404)
 		return
 	}
 
 	hm, err := c.storage.getHeatMap(dbname, metric)
 	if err != nil {
-		logger.Critical(err)
+		conn.writeError(err, 500)
 		return
+	}
+
+	var title string
+	if titles, ok := r.URL.Query()["label"]; ok {
+		title = titles[0]
+	} else {
+		title = metric
 	}
 
 	rw.Header().Set("Content-Type", "image/svg+xml")
