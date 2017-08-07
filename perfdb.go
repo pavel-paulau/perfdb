@@ -200,17 +200,10 @@ func (pdb *perfDB) getRawValues(dbname, metric string) ([][]interface{}, error) 
 }
 
 func metricHash(filePath string) (string, error) {
-	file, err := os.Open(filePath)
+	info, err := os.Stat(filePath)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil {
-		return "", err
-	}
-
 	return fmt.Sprintf("%s%d", filePath, info.Size()), nil
 }
 
