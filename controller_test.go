@@ -8,7 +8,6 @@ import (
 	"os"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -63,7 +62,6 @@ func TestAddSamplePerfDb(t *testing.T) {
 		bytes.NewBufferString("{\"cpu\":99.0}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
-	time.Sleep(10 * time.Millisecond) // Goroutine
 
 	assert.Equal(t, 200, rw.Code)
 	assert.Equal(t, "{\"status\":\"ok\"}", rw.Body.String())
@@ -82,7 +80,6 @@ func TestListMetricsPerfDb(t *testing.T) {
 		bytes.NewBufferString("{\"cpu\":99.0}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
-	time.Sleep(10 * time.Millisecond) // Goroutine
 
 	req, _ = http.NewRequest("GET", "/database", nil)
 	rw = httptest.NewRecorder()
@@ -105,13 +102,11 @@ func TestGetRawValuesPerfDb(t *testing.T) {
 		bytes.NewBufferString("{\"cpu\":1005}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
-	time.Sleep(10 * time.Millisecond) // Goroutine
 
 	req, _ = http.NewRequest("POST", "/database?ts=1411940889515410775",
 		bytes.NewBufferString("{\"cpu\":75.11}"))
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
-	time.Sleep(10 * time.Millisecond) // Goroutine
 
 	req, _ = http.NewRequest("GET", "/database/cpu", nil)
 	rw = httptest.NewRecorder()

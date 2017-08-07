@@ -140,12 +140,13 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
-		for metric, value := range samples.(map[string]interface{}) {
-			sample := Sample{tsNano, value.(float64)}
-			c.storage.addSample(dbname, metric, sample)
+	for metric, value := range samples.(map[string]interface{}) {
+		sample := Sample{tsNano, value.(float64)}
+		if err := c.storage.addSample(dbname, metric, sample); err != nil {
+			conn.writeError(err, 500)
+			return
 		}
-	}()
+	}
 
 	conn.writeJSON(map[string]string{"status": "ok"})
 }
