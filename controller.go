@@ -150,28 +150,6 @@ func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
 	conn.writeJSON(map[string]string{"status": "ok"})
 }
 
-func (c *Controller) getHeatMap(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	metric := vars["metric"]
-
-	conn, err := newConn(rw, r)
-
-	if err := c.checkDbExists(dbname); err != nil {
-		logger.Critical(err)
-		conn.writeError(err, 404)
-		return
-	}
-
-	hm, err := c.storage.getHeatMap(dbname, metric)
-	if err != nil {
-		logger.Critical(err)
-		conn.writeError(err, 500)
-		return
-	}
-	conn.writeJSON(hm)
-}
-
 func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dbname := vars["db"]
