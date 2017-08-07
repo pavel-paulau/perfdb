@@ -84,7 +84,7 @@ func (pdb *perfDB) addSample(dbname, metric string, sample Sample) error {
 
 	pdb.mu.Lock()
 	defer pdb.mu.Unlock()
-	if _, err := fmt.Fprintf(file, "%22d %025.12f\n", sample.ts, sample.v); err != nil {
+	if _, err := fmt.Fprintf(file, "%22d %025.9f\n", sample.ts, sample.v); err != nil {
 		logger.Critical(err)
 		return err
 	}
