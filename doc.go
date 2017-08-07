@@ -42,20 +42,6 @@ This API returns JSON document with aggregated characteristics (mean, percentile
 
 Please notice that Python is used for demonstration purpose only.
 
-perfdb provides class-based histograms as well:
-
-	$ curl -s http://127.0.0.1:8080/mydatabase/read_latency/histo | python -m json.tool
-	{
-		"0.000000 - 6.666667": 71.57979797971558,
-		"6.666667 - 13.333333": 18.206060606073383
-		"13.333333 - 20.000000": 5.3737373737363505,
-		"20.000000 - 26.666667": 2.9090909090906827,
-		"26.666667 - 33.333333": 1.2848484848484691,
-		"33.333333 - 40.000000": 0.6464646464646343,
-	}
-
-The output is a set of frequencies (from 0 to 100%) for different ranges of values.
-
 Finally, it is possible to generate heat map graphs in SVG format (use your browser to view):
 
 	http://127.0.0.1:8080/mydatabase/read_latency/heatmap

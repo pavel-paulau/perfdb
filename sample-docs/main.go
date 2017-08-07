@@ -81,9 +81,6 @@ func runWorkload(numSamples int, client *perfDbClient, errc chan error, wg *sync
 const guidance = `Please check out the summary:
     http://127.0.0.1:8080/mydatabase/mymetric/summary
 
-Histogram:
-    http://127.0.0.1:8080/mydatabase/mymetric/histo
-
 And heatmap graph:
     http://127.0.0.1:8080/mydatabase/mymetric/heatmap?label=Metric name, units
 `

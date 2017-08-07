@@ -16,7 +16,6 @@ func newRouter(controller *Controller) *mux.Router {
 	r.HandleFunc("/{db}/{metric}/summary", controller.getSummary).Methods("GET")
 	r.HandleFunc("/{db}/{metric}/_heatmap", controller.getHeatMap).Methods("GET")
 	r.HandleFunc("/{db}/{metric}/heatmap", controller.getHeatMapSVG).Methods("GET")
-	r.HandleFunc("/{db}/{metric}/histo", controller.getHistogram).Methods("GET")
 
 	return r
 }
