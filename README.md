@@ -104,20 +104,20 @@ Output is a JSON document with all timestamps and values:
 
 	[
 		[
-			1437137708114018208,
+			1437137708114,
 			10
 		],
 		[
-			1437137708114967597,
+			1437137708118,
 			15
 		],
 		[
-			1437137708123781628,
+			1437137708122,
 			16
 		]
 	]
 
-The first value in the nested list is the timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
+The first value in the nested list is the timestamp (the number of milliseconds elapsed since January 1, 1970 UTC).
 
 The second value is the stored measurement (integer or float).
 

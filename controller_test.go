@@ -116,13 +116,18 @@ func TestGetRawValues(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/database?ts=1411940889515410774",
-		bytes.NewBufferString("{\"cpu\":1005}"))
+	req, _ := http.NewRequest("POST", "/database?ts=1411940889515",
+		bytes.NewBufferString("{\"cpu\":100510051005}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
-	req, _ = http.NewRequest("POST", "/database?ts=1411940889515410775",
-		bytes.NewBufferString("{\"cpu\":75.11}"))
+	req, _ = http.NewRequest("POST", "/database?ts=1411940890615",
+		bytes.NewBufferString("{\"cpu\":0}"))
+	rw = httptest.NewRecorder()
+	newRouter(controller).ServeHTTP(rw, req)
+
+	req, _ = http.NewRequest("POST", "/database?ts=1411940891708",
+		bytes.NewBufferString("{\"cpu\":575.11}"))
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
@@ -132,7 +137,7 @@ func TestGetRawValues(t *testing.T) {
 
 	assert.Equal(t, 200, rw.Code)
 	assert.Equal(t,
-		"[[1411940889515410774,1005],[1411940889515410775,75.11]]",
+		"[[1411940889515,100510051005],[1411940890615,0],[1411940891708,575.11]]",
 		rw.Body.String())
 }
 
@@ -145,12 +150,12 @@ func TestGetSummary(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/database?ts=1411940889515410774",
+	req, _ := http.NewRequest("POST", "/database",
 		bytes.NewBufferString("{\"cpu\":1005}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
-	req, _ = http.NewRequest("POST", "/database?ts=1411940889515410775",
+	req, _ = http.NewRequest("POST", "/database",
 		bytes.NewBufferString("{\"cpu\":75.11}"))
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
@@ -174,12 +179,12 @@ func TestGetHeatmap(t *testing.T) {
 
 	controller := newController(storage)
 
-	req, _ := http.NewRequest("POST", "/database?ts=1411940889515410774",
+	req, _ := http.NewRequest("POST", "/database",
 		bytes.NewBufferString("{\"cpu\":1005}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
-	req, _ = http.NewRequest("POST", "/database?ts=1411940889515410775",
+	req, _ = http.NewRequest("POST", "/database",
 		bytes.NewBufferString("{\"cpu\":75.11}"))
 	rw = httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)

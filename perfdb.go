@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/pmylund/go-cache"
+	"time"
 )
 
 const (
@@ -26,17 +27,18 @@ type Sample struct {
 
 type perfDB struct {
 	baseDir string
-	cache   cache.Cache
 	mu      sync.Mutex
 }
+
+var timestampCache *cache.Cache
 
 func newPerfDB(baseDir string) (*perfDB, error) {
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		logger.Critical("Failed to initialize datastore: %s", err)
 		return nil, err
 	}
-	c := cache.New(cache.NoExpiration, cache.NoExpiration)
-	return &perfDB{baseDir, *c, sync.Mutex{}}, nil
+	timestampCache = cache.New(cache.NoExpiration, cache.NoExpiration)
+	return &perfDB{baseDir, sync.Mutex{}}, nil
 }
 
 func (pdb *perfDB) getDirPath(dbname string) string {
@@ -59,11 +61,108 @@ func (pdb *perfDB) isExist(dbname string) (bool, error) {
 	return false, err
 }
 
+func parseRecord(record string) (Sample, error) {
+	fields := strings.Fields(record)
+
+	ts, err := strconv.ParseInt(fields[0], 10, 64)
+	if err != nil {
+		return Sample{}, err
+	}
+
+	value, err := strconv.ParseFloat(fields[1], 64)
+	if err != nil {
+		return Sample{}, err
+	}
+	return Sample{ts, value}, nil
+}
+
+func readTimestamp(dataFile string) (int64, error) {
+	if cachedData, found := timestampCache.Get(dataFile); found {
+		return cachedData.(int64), nil
+	}
+
+	record, err := ioutil.ReadFile(dataFile)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseInt(string(record), 10, 64)
+}
+
+func storeTimestamp(dataFile string, timestamp int64) error {
+	file, err := os.OpenFile(dataFile, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if _, err = fmt.Fprint(file, timestamp); err != nil {
+		return err
+	}
+	timestampCache.Set(dataFile, timestamp, time.Minute)
+	return nil
+}
+
+func storeSample(dataFile string, sample Sample) error {
+	file, err := os.OpenFile(dataFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = fmt.Fprintf(file, "%d %v\n", sample.ts, sample.v)
+	return err
+}
+
+func initStore(dataFile string, sample Sample) error {
+	if err := storeTimestamp(dataFile+".1", sample.ts); err != nil {
+		return err
+	}
+	if err := storeTimestamp(dataFile+".n", sample.ts); err != nil {
+		return err
+	}
+
+	sample.ts = 0
+	return storeSample(dataFile, sample)
+}
+
+func appendSample(dataFile string, sample Sample) error {
+	ts, err := readTimestamp(dataFile + ".n")
+	if err != nil {
+		return err
+	}
+	if err := storeTimestamp(dataFile+".n", sample.ts); err != nil {
+		return err
+	}
+	sample.ts -= ts
+	return storeSample(dataFile, sample)
+}
+
+func (pdb *perfDB) addSample(dbname, metric string, sample Sample) error {
+	dataDir := pdb.getDirPath(dbname)
+	if err := os.MkdirAll(dataDir, 0775); err != nil {
+		return err
+	}
+	dataFile := pdb.getFilePath(dbname, metric)
+
+	pdb.mu.Lock()
+	defer pdb.mu.Unlock()
+
+	_, err := os.Stat(dataFile + ".n")
+	if err == nil { // Append delta
+		return appendSample(dataFile, sample)
+	} else if os.IsNotExist(err) {
+		return initStore(dataFile, sample)
+	}
+	return err
+}
+
 func (pdb *perfDB) listDatabases() ([]string, error) {
 	files, err := ioutil.ReadDir(pdb.baseDir)
 	if err != nil {
 		return nil, err
 	}
+
 	databases := []string{}
 	for _, f := range files {
 		databases = append(databases, f.Name())
@@ -73,48 +172,24 @@ func (pdb *perfDB) listDatabases() ([]string, error) {
 
 func (pdb *perfDB) listMetrics(dbname string) ([]string, error) {
 	dataDir := pdb.getDirPath(dbname)
-	files, err := ioutil.ReadDir(dataDir)
+
+	matches, err := filepath.Glob(dataDir + "/*.data")
 	if err != nil {
 		return nil, err
 	}
+
 	metrics := []string{}
-	for _, f := range files {
-		fname := strings.Replace(f.Name(), dataFileExt, "", 1)
-		metrics = append(metrics, fname)
+	for _, match := range matches {
+		name := strings.TrimPrefix(match, dataDir+"/")
+		name = strings.TrimRight(name, dataFileExt)
+		metrics = append(metrics, name)
 	}
 	return metrics, nil
 }
 
-const tsOffset = 22
-
-func (pdb *perfDB) addSample(dbname, metric string, sample Sample) error {
-	dataDir := pdb.getDirPath(dbname)
-	if err := os.MkdirAll(dataDir, 0775); err != nil {
-		return err
-	}
-
-	dataFile := pdb.getFilePath(dbname, metric)
-
-	file, err := os.OpenFile(dataFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		logger.Critical(err)
-		return err
-	}
-	defer file.Close()
-
-	pdb.mu.Lock()
-	defer pdb.mu.Unlock()
-	if _, err := fmt.Fprintf(file, "%22d %025.9f\n", sample.ts, sample.v); err != nil {
-		logger.Critical(err)
-		return err
-	}
-
-	return nil
-}
-
 const bufferSize = 1000
 
-func fullScan(fileName string, done <-chan struct{}) (<-chan string, <-chan error) {
+func readDeltas(fileName string, done <-chan struct{}) (<-chan string, <-chan error) {
 	samples := make(chan string, bufferSize)
 	errc := make(chan error, 1)
 
@@ -145,7 +220,7 @@ func fullScan(fileName string, done <-chan struct{}) (<-chan string, <-chan erro
 	return samples, errc
 }
 
-func parseSamples(records <-chan string) (<-chan Sample, <-chan error) {
+func parseSamples(records <-chan string, ts int64) (<-chan Sample, <-chan error) {
 	samples := make(chan Sample, bufferSize)
 	errc := make(chan error, 1)
 
@@ -153,19 +228,15 @@ func parseSamples(records <-chan string) (<-chan Sample, <-chan error) {
 		defer close(samples)
 		defer close(errc)
 
-		var err error
-		var value float64
-		var ts int64
 		for record := range records {
-			if value, err = strconv.ParseFloat(record[tsOffset+1:], 64); err != nil {
+			sample, err := parseRecord(record)
+			if err != nil {
 				errc <- err
-				break
+			} else {
+				sample.ts += ts
+				ts = sample.ts
+				samples <- sample
 			}
-			if ts, err = strconv.ParseInt(strings.TrimSpace(record[:tsOffset]), 10, 64); err != nil {
-				errc <- err
-				break
-			}
-			samples <- Sample{ts, value}
 		}
 	}()
 	return samples, errc
@@ -183,9 +254,14 @@ func mergeErrors(errcs ...<-chan error) error {
 func (pdb *perfDB) getRawValues(dbname, metric string) ([][]interface{}, error) {
 	dataFile := pdb.getFilePath(dbname, metric)
 
+	first, err := readTimestamp(dataFile + ".1")
+	if err != nil {
+		return nil, err
+	}
+
 	done := make(chan struct{}, 1)
-	rawSamples, rawErrors := fullScan(dataFile, done)
-	parsedSamples, parsedErrors := parseSamples(rawSamples)
+	rawSamples, rawErrors := readDeltas(dataFile, done)
+	parsedSamples, parsedErrors := parseSamples(rawSamples, first)
 
 	values := [][]interface{}{}
 	for sample := range parsedSamples {
@@ -199,33 +275,21 @@ func (pdb *perfDB) getRawValues(dbname, metric string) ([][]interface{}, error) 
 	return values, nil
 }
 
-func metricHash(filePath string) (string, error) {
-	info, err := os.Stat(filePath)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s%d", filePath, info.Size()), nil
-}
-
 func (pdb *perfDB) getSummary(dbname, metric string) (map[string]interface{}, error) {
 	var summary map[string]interface{}
 
 	dataFile := pdb.getFilePath(dbname, metric)
 
-	hash, err := metricHash(dataFile)
+	done := make(chan struct{}, 1)
+	defer close(done)
+
+	first, err := readTimestamp(dataFile + ".1")
 	if err != nil {
 		return nil, err
 	}
 
-	if cachedData, found := pdb.cache.Get(string(hash)); found {
-		return cachedData.(map[string]interface{}), nil
-	}
-
-	done := make(chan struct{}, 1)
-	defer close(done)
-
-	rawSamples, rawErrors := fullScan(dataFile, done)
-	parsedSamples, parsedErrors := parseSamples(rawSamples)
+	rawSamples, rawErrors := readDeltas(dataFile, done)
+	parsedSamples, parsedErrors := parseSamples(rawSamples, first)
 
 	values := []float64{}
 	sum := 0.0
@@ -258,39 +322,7 @@ func (pdb *perfDB) getSummary(dbname, metric string) (map[string]interface{}, er
 		summary[p] = values[pIdx]
 	}
 
-	pdb.cache.Set(hash, summary, cache.NoExpiration)
 	return summary, nil
-}
-
-type parsedSample struct {
-	ts int64
-	v  float64
-}
-
-func parseSamplesWithTimestamp(records <-chan string) (<-chan parsedSample, <-chan error) {
-	samples := make(chan parsedSample, bufferSize)
-	errc := make(chan error, 1)
-
-	go func() {
-		defer close(samples)
-		defer close(errc)
-
-		var err error
-		var ts int64
-		var value float64
-		for record := range records {
-			if value, err = strconv.ParseFloat(record[tsOffset+1:], 64); err != nil {
-				errc <- err
-				break
-			}
-			if ts, err = strconv.ParseInt(strings.TrimSpace(record[:tsOffset]), 10, 64); err != nil {
-				errc <- err
-				break
-			}
-			samples <- parsedSample{ts, value}
-		}
-	}()
-	return samples, errc
 }
 
 func (pdb *perfDB) getHeatMap(dbname, metric string) (*heatMap, error) {
@@ -302,10 +334,15 @@ func (pdb *perfDB) getHeatMap(dbname, metric string) (*heatMap, error) {
 	done := make(chan struct{}, 1)
 	defer close(done)
 
-	rawSamples, rawErrors := fullScan(dataFile, done)
-	parsedSamples, parsedErrors := parseSamplesWithTimestamp(rawSamples)
+	first, err := readTimestamp(dataFile + ".1")
+	if err != nil {
+		return nil, err
+	}
 
-	samples := []parsedSample{}
+	rawSamples, rawErrors := readDeltas(dataFile, done)
+	parsedSamples, parsedErrors := parseSamples(rawSamples, first)
+
+	samples := []Sample{}
 	for sample := range parsedSamples {
 		hm.MaxValue = math.Max(hm.MaxValue, sample.v)
 		if sample.ts < hm.MinTS {

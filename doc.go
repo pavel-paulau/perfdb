@@ -90,7 +90,7 @@ Output is a JSON document with all timestamps and values:
 		]
 	]
 
-The first value in the nested list is the timestamp (the number of nanoseconds elapsed since January 1, 1970 UTC).
+The first value in the nested list is the timestamp (the number of milliseconds elapsed since January 1, 1970 UTC).
 
 The second value is the stored measurement (integer or float).
 */

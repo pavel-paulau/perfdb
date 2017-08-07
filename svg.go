@@ -206,7 +206,7 @@ func generateSVG(output io.Writer, hm *heatMap, title string) {
 
 	drawHeatMap(canvas, canvasSize, chartInnerSize, chartMargin, hm)
 
-	timeElapsed := time.Duration(hm.MaxTS - hm.MinTS)
+	timeElapsed := time.Duration(hm.MaxTS-hm.MinTS) * 1e6
 	drawXTitle(canvas, canvasSize, chartInnerSize, chartMargin, timeElapsed)
 	drawXAxis(canvas, canvasSize, chartInnerSize, chartMargin, timeElapsed)
 
