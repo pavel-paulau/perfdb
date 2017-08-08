@@ -13,8 +13,8 @@ type httpResponse struct {
 func (r httpResponse) String() (s string) {
 	b, err := json.Marshal(r.Raw)
 	if err != nil {
-		b, err = json.Marshal(map[string]string{
-			"error": fmt.Sprint("", err),
+		b, _ = json.Marshal(map[string]string{
+			"error": err.Error(),
 		})
 	}
 	s = string(b)
