@@ -1,19 +1,23 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func newRouter(controller *Controller) *mux.Router {
-	r := mux.NewRouter()
-	r.StrictSlash(true)
+func newRouter(controller *Controller) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
 
-	r.HandleFunc("/", controller.listDatabases).Methods("GET")
-	r.HandleFunc("/{db}", controller.listMetrics).Methods("GET")
-	r.HandleFunc("/{db}", controller.addSamples).Methods("POST")
-	r.HandleFunc("/{db}/{metric}", controller.getRawValues).Methods("GET")
-	r.HandleFunc("/{db}/{metric}/summary", controller.getSummary).Methods("GET")
-	r.HandleFunc("/{db}/{metric}/heatmap", controller.getHeatMapSVG).Methods("GET")
+	router := gin.Default()
 
-	return r
+	rg := router.Group("/")
+
+	rg.GET("/", controller.listDatabases)
+	rg.GET("/:db", controller.listMetrics)
+	rg.GET("/:db/:metric", controller.getRawValues)
+	rg.GET("/:db/:metric/summary", controller.getSummary)
+	rg.GET("/:db/:metric/heatmap", controller.getHeatMapSVG)
+
+	rg.POST("/:db", controller.addSamples)
+
+	return router
 }

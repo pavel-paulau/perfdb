@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 type Controller struct {
@@ -16,25 +16,14 @@ func newController(storage *perfDB) *Controller {
 	return &Controller{storage}
 }
 
-func newConn(rw http.ResponseWriter, r *http.Request) (*restHandler, error) {
-	conn := &restHandler{rw, r}
-	err := conn.open()
-	return conn, err
-}
-
-func (c *Controller) listDatabases(rw http.ResponseWriter, r *http.Request) {
-	conn, err := newConn(rw, r)
-	if err != nil {
-		return
-	}
-
+func (c *Controller) listDatabases(context *gin.Context) {
 	databases, err := c.storage.listDatabases()
 	if err != nil {
-		conn.writeError(err, 500)
+		context.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	conn.writeJSON(databases)
+	context.JSON(http.StatusOK, databases)
 }
 
 func (c *Controller) checkDbExists(dbname string) error {
@@ -48,135 +37,105 @@ func (c *Controller) checkDbExists(dbname string) error {
 	return nil
 }
 
-func (c *Controller) listMetrics(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-
-	conn, err := newConn(rw, r)
-	if err != nil {
-		return
-	}
+func (c *Controller) listMetrics(context *gin.Context) {
+	dbname := context.Param("db")
 
 	if err := c.checkDbExists(dbname); err != nil {
-		conn.writeError(err, 404)
+		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
 	metrics, err := c.storage.listMetrics(dbname)
 	if err != nil {
-		conn.writeError(err, 500)
+		context.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	conn.writeJSON(metrics)
+	context.JSON(http.StatusOK, metrics)
 }
 
-func (c *Controller) getRawValues(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	metric := vars["metric"]
-
-	conn, err := newConn(rw, r)
-	if err != nil {
-		return
-	}
+func (c *Controller) getRawValues(context *gin.Context) {
+	dbname := context.Param("db")
+	metric := context.Param("metric")
 
 	if err := c.checkDbExists(dbname); err != nil {
-		conn.writeError(err, 404)
+		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
 	values, err := c.storage.getRawValues(dbname, metric)
 	if err != nil {
-		conn.writeError(err, 500)
+		context.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	conn.writeJSON(values)
+	context.JSON(http.StatusOK, values)
 }
 
-func (c *Controller) getSummary(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	metric := vars["metric"]
-
-	conn, err := newConn(rw, r)
-	if err != nil {
-		return
-	}
+func (c *Controller) getSummary(context *gin.Context) {
+	dbname := context.Param("db")
+	metric := context.Param("metric")
 
 	if err := c.checkDbExists(dbname); err != nil {
-		conn.writeError(err, 404)
+		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
 	values, err := c.storage.getSummary(dbname, metric)
 	if err != nil {
-		conn.writeError(err, 500)
+		context.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	conn.writeJSON(values)
+	context.JSON(http.StatusOK, values)
 }
 
-func (c *Controller) addSamples(rw http.ResponseWriter, r *http.Request) {
+func (c *Controller) addSamples(context *gin.Context) {
 	var tsNano int64
-	if timestamps, ok := r.URL.Query()["ts"]; ok {
-		tsNano = parseTimestamp(timestamps[0])
+	if timestamp := context.Query("ts"); timestamp != "" {
+		tsNano = parseTimestamp(timestamp)
 	} else {
 		tsNano = time.Now().UnixNano()
 	}
 
-	vars := mux.Vars(r)
-	dbname := vars["db"]
+	dbname := context.Param("db")
 
-	conn, err := newConn(rw, r)
-	if err != nil {
+	var samples map[string]interface{}
+	if err := context.BindJSON(&samples); err != nil {
+		context.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	samples, err := conn.readJSON()
-	if err != nil {
-		conn.writeError(err, 400)
-		return
-	}
-
-	for metric, value := range samples.(map[string]interface{}) {
+	for metric, value := range samples {
 		sample := Sample{tsNano, value.(float64)}
 		if err := c.storage.addSample(dbname, metric, sample); err != nil {
-			conn.writeError(err, 500)
+			context.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	}
 
-	conn.writeJSON(map[string]string{"status": "ok"})
+	context.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (c *Controller) getHeatMapSVG(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dbname := vars["db"]
-	metric := vars["metric"]
-
-	conn, err := newConn(rw, r)
-	if err != nil {
-		return
-	}
+func (c *Controller) getHeatMapSVG(context *gin.Context) {
+	dbname := context.Param("db")
+	metric := context.Param("metric")
 
 	if err := c.checkDbExists(dbname); err != nil {
-		conn.writeError(err, 404)
+		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
 	hm, err := c.storage.getHeatMap(dbname, metric)
 	if err != nil {
-		conn.writeError(err, 500)
+		context.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	var title string
-	if titles, ok := r.URL.Query()["label"]; ok {
-		title = titles[0]
+	if label := context.Query("label"); label != "" {
+		title = label
 	} else {
 		title = metric
 	}
 
-	rw.Header().Set("Content-Type", "image/svg+xml")
-	generateSVG(rw, hm, title)
+	context.Writer.Header().Set("Content-Type", "image/svg+xml")
+	generateSVG(context.Writer, hm, title)
 }

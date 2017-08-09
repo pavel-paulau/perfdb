@@ -25,5 +25,7 @@ perfdb
 sample-docs/sample-docs
 data
 vendor/github.com/
+vendor/golang.org/
+vendor/gopkg.in/
 
 .idea
