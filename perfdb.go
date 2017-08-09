@@ -51,14 +51,18 @@ func (pdb *perfDB) getFilePath(dbname, metric string) string {
 	return filepath.Join(dataDir, metric+dataFileExt)
 }
 
-func (pdb *perfDB) isExist(dbname string) (bool, error) {
+func (pdb *perfDB) checkDbExists(dbname string) error {
 	dataDir := pdb.getDirPath(dbname)
 
 	_, err := os.Stat(dataDir)
-	if err == nil {
-		return true, nil
-	}
-	return false, err
+	return err
+}
+
+func (pdb *perfDB) checkMetricExists(dbname string, metric string) error {
+	dataFile := pdb.getFilePath(dbname, metric)
+
+	_, err := os.Stat(dataFile)
+	return err
 }
 
 func parseRecord(record string) (Sample, error) {
@@ -170,13 +174,10 @@ func (pdb *perfDB) listDatabases() ([]string, error) {
 	return databases, nil
 }
 
-func (pdb *perfDB) listMetrics(dbname string) ([]string, error) {
+func (pdb *perfDB) listMetrics(dbname string) []string {
 	dataDir := pdb.getDirPath(dbname)
 
-	matches, err := filepath.Glob(dataDir + "/*.data")
-	if err != nil {
-		return nil, err
-	}
+	matches, _ := filepath.Glob(dataDir + "/*.data") // Glob ignores file system errors
 
 	metrics := []string{}
 	for _, match := range matches {
@@ -184,7 +185,7 @@ func (pdb *perfDB) listMetrics(dbname string) ([]string, error) {
 		name = strings.TrimRight(name, dataFileExt)
 		metrics = append(metrics, name)
 	}
-	return metrics, nil
+	return metrics
 }
 
 const bufferSize = 1000

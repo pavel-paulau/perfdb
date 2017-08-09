@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -26,30 +25,15 @@ func (c *Controller) listDatabases(context *gin.Context) {
 	context.JSON(http.StatusOK, databases)
 }
 
-func (c *Controller) checkDbExists(dbname string) error {
-	status, err := c.storage.isExist(dbname)
-	if err != nil {
-		return err
-	}
-	if !status {
-		return errors.New("not found")
-	}
-	return nil
-}
-
 func (c *Controller) listMetrics(context *gin.Context) {
 	dbname := context.Param("db")
 
-	if err := c.checkDbExists(dbname); err != nil {
+	if err := c.storage.checkDbExists(dbname); err != nil {
 		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	metrics, err := c.storage.listMetrics(dbname)
-	if err != nil {
-		context.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+	metrics := c.storage.listMetrics(dbname)
 	context.JSON(http.StatusOK, metrics)
 }
 
@@ -57,7 +41,12 @@ func (c *Controller) getRawValues(context *gin.Context) {
 	dbname := context.Param("db")
 	metric := context.Param("metric")
 
-	if err := c.checkDbExists(dbname); err != nil {
+	if err := c.storage.checkDbExists(dbname); err != nil {
+		context.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	if err := c.storage.checkMetricExists(dbname, metric); err != nil {
 		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
@@ -74,7 +63,12 @@ func (c *Controller) getSummary(context *gin.Context) {
 	dbname := context.Param("db")
 	metric := context.Param("metric")
 
-	if err := c.checkDbExists(dbname); err != nil {
+	if err := c.storage.checkDbExists(dbname); err != nil {
+		context.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	if err := c.storage.checkMetricExists(dbname, metric); err != nil {
 		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}
@@ -88,11 +82,11 @@ func (c *Controller) getSummary(context *gin.Context) {
 }
 
 func (c *Controller) addSamples(context *gin.Context) {
-	var tsNano int64
-	if timestamp := context.Query("ts"); timestamp != "" {
-		tsNano = parseTimestamp(timestamp)
+	var timestamp int64
+	if customTimestamp := context.Query("ts"); customTimestamp != "" {
+		timestamp = parseTimestamp(customTimestamp)
 	} else {
-		tsNano = time.Now().UnixNano()
+		timestamp = time.Now().UnixNano() / 1e6
 	}
 
 	dbname := context.Param("db")
@@ -104,7 +98,7 @@ func (c *Controller) addSamples(context *gin.Context) {
 	}
 
 	for metric, value := range samples {
-		sample := Sample{tsNano, value.(float64)}
+		sample := Sample{timestamp, value.(float64)}
 		if err := c.storage.addSample(dbname, metric, sample); err != nil {
 			context.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -118,7 +112,12 @@ func (c *Controller) getHeatMapSVG(context *gin.Context) {
 	dbname := context.Param("db")
 	metric := context.Param("metric")
 
-	if err := c.checkDbExists(dbname); err != nil {
+	if err := c.storage.checkDbExists(dbname); err != nil {
+		context.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	if err := c.storage.checkMetricExists(dbname, metric); err != nil {
 		context.AbortWithError(http.StatusNotFound, err)
 		return
 	}

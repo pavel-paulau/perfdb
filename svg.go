@@ -77,8 +77,6 @@ func tickFormatter(maxValue float64) string {
 		return "%.0f"
 	} else if maxValue < math.Pow(10, -4) {
 		return "%.5f"
-	} else if maxValue == 0 {
-		return "%.1f"
 	} else {
 		for power := -3; power < 1; power++ {
 			if maxValue <= math.Pow(10, float64(power)) {
