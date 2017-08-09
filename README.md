@@ -130,8 +130,6 @@ Just download the file for your platform and run it in terminal:
 
 	$ ./perfdb 
 
-	:-:-: perfdb :-:-:			serving http://127.0.0.1:8080/
-
 The command above starts HTTP listener on port 8080.
 Folder named "data" will be created in the current working directory by default.
 
@@ -139,8 +137,10 @@ It possible to specify custom setting using CLI arguments:
 
 	$ ./perfdb -h
 	Usage of ./perfdb:
-	  -address="127.0.0.1:8080": serve requests to this host[:port]
-	  -path="data": PerfDB data directory
+		-address string
+			serve requests to this host:port (default "127.0.0.1:8080")
+		-path string
+			PerfDB data directory (default "data")
 
 Reference
 ---------
