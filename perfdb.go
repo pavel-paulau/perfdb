@@ -153,7 +153,7 @@ func (pdb *perfDB) addSample(dbname, metric string, sample Sample) error {
 	defer pdb.mu.Unlock()
 
 	_, err := os.Stat(dataFile + ".n")
-	if err == nil { // Append delta
+	if err == nil {
 		return appendSample(dataFile, sample)
 	} else if os.IsNotExist(err) {
 		return initStore(dataFile, sample)
