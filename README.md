@@ -140,16 +140,7 @@ It possible to specify custom setting using CLI arguments:
 	$ ./perfdb -h
 	Usage of ./perfdb:
 	  -address="127.0.0.1:8080": serve requests to this host[:port]
-	  -fsync=false: Enable fsync calls after every write operation
 	  -path="data": PerfDB data directory
-
-There is also sample-docs executable available on the [Releases](https://github.com/pavel-paulau/perfdb/releases) page.
-
-While running perfdb in background, execute this program without any arguments:
-
-	$ ./sample-docs
-
-It will generate 100K random samples. This data set will help to get familiar with the most fundamental API.
 
 Reference
 ---------
