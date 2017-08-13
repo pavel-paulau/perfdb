@@ -37,7 +37,7 @@ func newPerfDB(baseDir string) (*perfDB, error) {
 		logger.Critical("Failed to initialize datastore: %s", err)
 		return nil, err
 	}
-	timestampCache = cache.New(cache.NoExpiration, cache.NoExpiration)
+	timestampCache = cache.New(time.Minute, time.Hour)
 	return &perfDB{baseDir, sync.Mutex{}}, nil
 }
 
@@ -103,7 +103,7 @@ func storeTimestamp(dataFile string, timestamp int64) error {
 	if _, err = fmt.Fprint(file, timestamp); err != nil {
 		return err
 	}
-	timestampCache.Set(dataFile, timestamp, time.Minute)
+	timestampCache.Set(dataFile, timestamp, cache.DefaultExpiration)
 	return nil
 }
 
