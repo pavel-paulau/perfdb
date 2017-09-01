@@ -142,11 +142,3 @@ It possible to specify custom setting using CLI arguments:
 		-path string
 			PerfDB data directory (default "data")
 
-Reference
----------
-
-Please read the following articles to understand the complexity of times series databases:
-
-- [Thoughts on Time-series Databases](http://jmoiron.net/blog/thoughts-on-timeseries-databases/) by Jason Moiron
-
-- [Time-Series Database Requirements](http://www.xaprb.com/blog/2014/06/08/time-series-database-requirements/) by Baron Schwartz
