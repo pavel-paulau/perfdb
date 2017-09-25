@@ -182,7 +182,7 @@ func (pdb *perfDB) listMetrics(dbname string) []string {
 	metrics := []string{}
 	for _, match := range matches {
 		name := strings.TrimPrefix(match, dataDir+"/")
-		name = strings.TrimRight(name, dataFileExt)
+		name = strings.TrimSuffix(name, dataFileExt)
 		metrics = append(metrics, name)
 	}
 	return metrics

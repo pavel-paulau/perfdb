@@ -95,7 +95,7 @@ func TestListMetrics(t *testing.T) {
 	controller := newController(storage)
 
 	req, _ := http.NewRequest("POST", "/database",
-		bytes.NewBufferString("{\"cpu\":99.0}"))
+		bytes.NewBufferString("{\"latency_set\":99.0}"))
 	rw := httptest.NewRecorder()
 	newRouter(controller).ServeHTTP(rw, req)
 
@@ -104,7 +104,7 @@ func TestListMetrics(t *testing.T) {
 	newRouter(controller).ServeHTTP(rw, req)
 
 	assert.Equal(t, http.StatusOK, rw.Code)
-	assert.Equal(t, "[\"cpu\"]", rw.Body.String())
+	assert.Equal(t, "[\"latency_set\"]", rw.Body.String())
 }
 
 func TestListMetricsMissingDB(t *testing.T) {
