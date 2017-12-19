@@ -97,8 +97,12 @@ func (c *Controller) addSamples(context *gin.Context) {
 		return
 	}
 
-	for metric, value := range samples {
-		sample := Sample{timestamp, value.(float64)}
+	for metric, rawValue := range samples {
+		value, ok := rawValue.(float64)
+		if !ok {
+			continue
+		}
+		sample := Sample{timestamp, value}
 		if err := c.storage.addSample(dbname, metric, sample); err != nil {
 			context.AbortWithError(http.StatusInternalServerError, err)
 			return
