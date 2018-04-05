@@ -204,6 +204,7 @@ func readDeltas(fileName string, done <-chan struct{}) (<-chan string, <-chan er
 			return
 		}
 		defer file.Close()
+		defer file.Sync()
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
