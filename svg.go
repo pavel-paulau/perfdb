@@ -64,7 +64,7 @@ func drawXAxis(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin mar
 	}
 }
 
-func drawYTitle(canvas *svg.SVG, canvasSize, chartInnerSize size, chartMargin margin, title string) {
+func drawYTitle(canvas *svg.SVG, chartInnerSize size, chartMargin margin, title string) {
 	canvas.Gtransform(fmt.Sprintf("translate(%d,%d) rotate(-90)", 15, chartMargin.top+chartInnerSize.height/2))
 	canvas.Text(0, 0, title, middleFontStyle)
 	canvas.Gend()
@@ -126,7 +126,7 @@ func drawGrid(canvas *svg.SVG, chartInnerSize size, chartMargin margin) {
 		borderStyle)
 }
 
-func drawHeatBar(canvas *svg.SVG, chartInnerSize, chartOuterSize, heatBarInnerSize size, chartMargin, heatBarMargin margin, hm *heatMap) {
+func drawHeatBar(canvas *svg.SVG, chartInnerSize, chartOuterSize, heatBarInnerSize size, heatBarMargin margin, hm *heatMap) {
 	var heatBarColor = []svg.Offcolor{
 		{0, "#7F2704", 1.0},
 		{25, "#D74701", 1.0},
@@ -210,11 +210,11 @@ func generateSVG(output io.Writer, hm *heatMap, title string) {
 	drawXAxis(canvas, canvasSize, chartInnerSize, chartMargin, timeElapsed)
 
 	drawYAxis(canvas, canvasSize, chartInnerSize, chartMargin, hm)
-	drawYTitle(canvas, canvasSize, chartInnerSize, chartMargin, title)
+	drawYTitle(canvas, chartInnerSize, chartMargin, title)
 
 	drawGrid(canvas, chartInnerSize, chartMargin)
 
-	drawHeatBar(canvas, chartInnerSize, chartOuterSize, heatBarInnerSize, chartMargin, heatBarMargin, hm)
+	drawHeatBar(canvas, chartInnerSize, chartOuterSize, heatBarInnerSize, heatBarMargin, hm)
 
 	canvas.End()
 }
