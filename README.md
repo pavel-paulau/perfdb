@@ -94,9 +94,7 @@ To list all metrics, use request similar to:
 Querying samples
 ----------------
 
-Only bulk queries are supported, but even they are not recommended.
-
-To get the list of samples, use request similar to:
+Only bulk queries are supported. To get the list of samples, use request similar to:
 
 	$ curl -s http://127.0.0.1:8080/mydatabase/read_latency | python -m json.tool
 
